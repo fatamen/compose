@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button onclick="ajax1()">ajax1</button>
+    <button onclick="axios1()">axios1</button>
+    <button onclick="axios2()">axios : promise</button>
+    <button onclick="axios3()">axios : async / await</button>
+    <script src="https://unpkg.com/axios@1.9.0/dist/axios.min.js"></script>
+    <script>
+        const request = new XMLHttpRequest();
+        function ajax1() {
+            request.onreadystatechange = function() {
+                if (request.readyState == 4 && request.status == 200) {
+                    console.log("執行結果1", request.responseText);
+                }
+            };
+            request.open('GET', 'http://localhost:8080/ajax/pages/products/1');
+            request.send();
+        }
+        function axios1() {
+            axios({
+                method: 'GET',
+                url: 'http://localhost:8080/ajax/pages/products/1'
+            }).then(function(response) {
+                console.log("then", response);
+
+            }).catch(function(error) {
+                console.log("catch", error);
+
+            }).finally(function() {
+                console.log("finally");
+            });
+        }
+        function axios2() {
+            axios.get('http://localhost:8080/ajax/pages/products/2').then(function(response) {
+                console.log("then", response);
+
+            }).catch(function(error) {
+                console.log("catch", error);
+
+            });
+        }
+        async function axios3() {
+            try {
+                const response = await axios.get('http://localhost:8080/ajax/pages/products/3');
+                console.log("then", response);
+
+            } catch(error) {
+                console.log("catch", error);
+
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+	<input type="text" oninput="doinput(event)">
+    <button onclick="callCreate()">新增</button>
+    <button onclick="callModify()">修改</button>
+    <button onclick="callRemove()">刪除</button>
+    <button onclick="callFindById()">查詢1筆</button>
+    <button onclick="callFind()">查詢多筆</button>
+
+    <script src="https://unpkg.com/sweetalert2@11.22.0/dist/sweetalert2.all.min.js"></script>
+    <script src="https://unpkg.com/axios@1.6.7/dist/axios.min.js"></script>
+    <script>
+    	function doinput(event) {
+    		console.log("doinput", event.target.value);
+    	}
+        async function callCreate() {
+            Swal.fire({
+                title: "Loading......",
+                showConfirmButton: false,
+                allowOutsideClick: false,
+            });
+            const body = {
+                "id": 16,
+                "name": "hahaha",
+                "price": 2.3,
+                "make": "2024-04-15",
+                "expire": 4
+            };
+            try {
+                const response = await axios.post("http://localhost:8080/ajax/pages/products", body);
+                if(response.data.success) {
+                    Swal.fire({
+                        text: response.data.message,
+                        icon: "success",
+                    });
+                } else {
+                    Swal.fire({
+                        text: response.data.message,
+                        icon: "warning",
+                    });
+                }
+            } catch (error) {
+                console.log("error", error);
+                Swal.fire({
+                    text: error.message,
+                    icon: "error",
+                });
+            }
+        }
+        async function callModify() {
+            Swal.fire({
+                title: "Loading......",
+                showConfirmButton: false,
+                allowOutsideClick: false,
+            });
+            const body = {
+                "id": 12,
+                "name": "hehehe",
+                "price": 5.6,
+                "make": "2024-04-30 00:00:00",
+                "expire": 7
+            };
+            try {
+                const response = await axios.put("http://localhost:8080/ajax/pages/products/12", body);
+                if(response.data.success) {
+                    Swal.fire({
+                        text: response.data.message,
+                        icon: "success",
+                    });
+                } else {
+                    Swal.fire({
+                        text: response.data.message,
+                        icon: "warning",
+                    });
+                }
+            } catch (error) {
+                console.log("error", error);
+                Swal.fire({
+                    text: error.message,
+                    icon: "error",
+                });
+            }
+        }
+        async function callRemove() {
+            const result = await Swal.fire({
+                title: "確定？",
+                allowOutsideClick: false,
+                showCancelButton: true,
+            });
+            if(result.isConfirmed) {
+                Swal.fire({
+                    title: "Loading......",
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                });
+                try {
+                    const response = await axios.delete("http://localhost:8080/ajax/pages/products/15");
+                    if(response.data.success) {
+                        Swal.fire({
+                            text: response.data.message,
+                            icon: "success",
+                        });
+                    } else {
+                        Swal.fire({
+                            text: response.data.message,
+                            icon: "warning",
+                        });
+                    }
+                } catch(error) {
+                    console.log("error", error);
+                    Swal.fire({
+                        text: error.message,
+                        icon: "error",
+                    });
+                }
+            }
+        }
+        function callFindById() {
+            Swal.fire({
+                title: "Loading......",
+                showConfirmButton: false,
+                allowOutsideClick: false,
+            });
+            axios.get("http://localhost:8080/ajax/pages/products/1").then(function(response) {
+                console.log("response", response);
+
+                setTimeout(function() {
+                    Swal.close();
+                }, 500);
+            }).catch(function(error) {
+                console.log("error", error);
+                Swal.fire({
+                    text: error.message,
+                    icon: "error",
+                });
+            });
+        }
+        async function callFind() {
+            Swal.fire({
+                title: "Loading......",
+                showConfirmButton: false,
+                allowOutsideClick: false,
+            });
+            const body = {
+                "start": 0,
+                "rows": 10,
+                "name": null,
+                "order": "id",
+                "dir": false
+            };
+            try {
+                const response = await axios.post("http://localhost:8080/ajax/pages/products/find", body);
+                console.log("response", response);
+
+                setTimeout(function() {
+                    Swal.close();
+                }, 500);
+            } catch(error) {
+                console.log("error", error);
+                Swal.fire({
+                    text: error.message,
+                    icon: "error",
+                });
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+name: "proj"
+
+services:
+  java:
+    build:
+      context: ./back
+      dockerfile: ./tomcat.dockerfile
+      args:
+        war_file: labboot-back.war
+    container_name: proj-java
+    ports:
+      - "9080:8080"
+  vue:
+    build:
+      context: ./front
+      dockerfile: ./nginx.dockerfile
+      args:
+        config_file: nginx.conf
+        publish_dir: dist
+    container_name: proj-vue
+    depends_on:
+      - java
+    environment:
+      - TZ=Asia/Taipei
+    ports:
+      - "80:80"
+      - "6173:6173"
