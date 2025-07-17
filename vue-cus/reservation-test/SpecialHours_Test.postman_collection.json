@@ -1,0 +1,240 @@
+{
+	"info": {
+		"_postman_id": "b2c3d4e5-f6g7-8901-bcde-f23456789012",
+		"name": "特殊營業時間 API 測試",
+		"description": "Golden Bowl 特殊營業時間管理 API 測試集合",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. 設定春節特殊營業時間",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "date",
+							"value": "2025-01-29",
+							"type": "text",
+							"description": "春節日期"
+						},
+						{
+							"key": "openTime",
+							"value": "12:00",
+							"type": "text"
+						},
+						{
+							"key": "closeTime",
+							"value": "20:00",
+							"type": "text"
+						},
+						{
+							"key": "isClose",
+							"value": "false",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/stores/1/hours/special",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"stores",
+						"1",
+						"hours",
+						"special"
+					]
+				},
+				"description": "設定春節當天的特殊營業時間 12:00-20:00"
+			}
+		},
+		{
+			"name": "2. 設定元旦不營業",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "date",
+							"value": "2025-01-01",
+							"type": "text",
+							"description": "元旦"
+						},
+						{
+							"key": "isClose",
+							"value": "true",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/stores/1/hours/special",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"stores",
+						"1",
+						"hours",
+						"special"
+					]
+				},
+				"description": "設定元旦當天不營業"
+			}
+		},
+		{
+			"name": "3. 查詢特殊營業時間",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/stores/1/hours/special",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"stores",
+						"1",
+						"hours",
+						"special"
+					]
+				},
+				"description": "取得餐廳的特殊營業時間設定"
+			}
+		},
+		{
+			"name": "4. 設定週末特殊營業時間",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "date",
+							"value": "2025-01-18",
+							"type": "text",
+							"description": "週六"
+						},
+						{
+							"key": "openTime",
+							"value": "10:30",
+							"type": "text"
+						},
+						{
+							"key": "closeTime",
+							"value": "23:30",
+							"type": "text"
+						},
+						{
+							"key": "isClose",
+							"value": "false",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/stores/1/hours/special",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"stores",
+						"1",
+						"hours",
+						"special"
+					]
+				},
+				"description": "設定週六的特殊營業時間 10:30-23:30"
+			}
+		},
+		{
+			"name": "5. 檢查特殊營業時間是否生效",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/stores/1/hours/check/2025-01-29?time=15:00",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"stores",
+						"1",
+						"hours",
+						"check",
+						"2025-01-29"
+					],
+					"query": [
+						{
+							"key": "time",
+							"value": "15:00"
+						}
+					]
+				},
+				"description": "檢查春節當天 15:00 是否營業（應該營業）"
+			}
+		},
+		{
+			"name": "6. 檢查特殊休假日是否生效",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/stores/1/hours/check/2025-01-01?time=12:00",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"stores",
+						"1",
+						"hours",
+						"check",
+						"2025-01-01"
+					],
+					"query": [
+						{
+							"key": "time",
+							"value": "12:00"
+						}
+					]
+				},
+				"description": "檢查元旦當天 12:00 是否營業（應該不營業）"
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+} 

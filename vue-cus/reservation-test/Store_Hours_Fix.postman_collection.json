@@ -1,0 +1,302 @@
+{
+	"info": {
+		"_postman_id": "store-hours-fix",
+		"name": "營業時間不一致問題修復測試",
+		"description": "修復營業時間檢查和查詢不一致的問題",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. 檢查問題狀態",
+			"item": [
+				{
+					"name": "檢查當前營業時間設定",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours"
+							]
+						},
+						"description": "檢查當前營業時間設定（應該顯示 isOpen: false）"
+					},
+					"response": []
+				},
+				{
+					"name": "檢查週三 12:00 是否營業",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours/check?day=WEDNESDAY&time=12:00",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours",
+								"check"
+							],
+							"query": [
+								{
+									"key": "day",
+									"value": "WEDNESDAY"
+								},
+								{
+									"key": "time",
+									"value": "12:00"
+								}
+							]
+						},
+						"description": "檢查週三 12:00 是否營業（應該顯示 isOpen: true）"
+					},
+					"response": []
+				}
+			],
+			"description": "檢查問題的當前狀態"
+		},
+		{
+			"name": "2. 修復問題",
+			"item": [
+				{
+					"name": "設定預設營業時間",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours/default",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours",
+								"default"
+							]
+						},
+						"description": "設定預設營業時間（週一到週五 11:00-22:00，週末 10:00-23:00）"
+					},
+					"response": []
+				}
+			],
+			"description": "執行修復操作"
+		},
+		{
+			"name": "3. 驗證修復結果",
+			"item": [
+				{
+					"name": "再次檢查營業時間設定",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours"
+							]
+						},
+						"description": "檢查修復後的營業時間設定（應該顯示 isOpen: true）"
+					},
+					"response": []
+				},
+				{
+					"name": "再次檢查週三 12:00 是否營業",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours/check?day=WEDNESDAY&time=12:00",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours",
+								"check"
+							],
+							"query": [
+								{
+									"key": "day",
+									"value": "WEDNESDAY"
+								},
+								{
+									"key": "time",
+									"value": "12:00"
+								}
+							]
+						},
+						"description": "檢查修復後的週三 12:00 是否營業（應該顯示 isOpen: true）"
+					},
+					"response": []
+				}
+			],
+			"description": "驗證修復是否成功"
+		},
+		{
+			"name": "4. 完整測試",
+			"item": [
+				{
+					"name": "測試週三 23:00（應該休息）",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours/check?day=WEDNESDAY&time=23:00",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours",
+								"check"
+							],
+							"query": [
+								{
+									"key": "day",
+									"value": "WEDNESDAY"
+								},
+								{
+									"key": "time",
+									"value": "23:00"
+								}
+							]
+						},
+						"description": "測試週三 23:00 是否營業（應該顯示 isOpen: false）"
+					},
+					"response": []
+				},
+				{
+					"name": "測試週六 15:00（應該營業）",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours/check?day=SATURDAY&time=15:00",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours",
+								"check"
+							],
+							"query": [
+								{
+									"key": "day",
+									"value": "SATURDAY"
+								},
+								{
+									"key": "time",
+									"value": "15:00"
+								}
+							]
+						},
+						"description": "測試週六 15:00 是否營業（應該顯示 isOpen: true）"
+					},
+					"response": []
+				},
+				{
+					"name": "測試週日 09:00（應該休息）",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/stores/1/hours/check?day=SUNDAY&time=09:00",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"stores",
+								"1",
+								"hours",
+								"check"
+							],
+							"query": [
+								{
+									"key": "day",
+									"value": "SUNDAY"
+								},
+								{
+									"key": "time",
+									"value": "09:00"
+								}
+							]
+						},
+						"description": "測試週日 09:00 是否營業（應該顯示 isOpen: false）"
+					},
+					"response": []
+				}
+			],
+			"description": "完整測試各種時間點"
+		}
+	],
+	"event": [
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// 自動化測試腳本",
+					"pm.test('狀態碼是 200', function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test('響應時間小於 2000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+					"});",
+					"",
+					"// 檢查營業時間一致性",
+					"if (pm.request.url.path.includes('check')) {",
+					"    pm.test('營業時間檢查應該返回有效結果', function () {",
+					"        const response = pm.response.json();",
+					"        pm.expect(response).to.have.property('isOpen');",
+					"        pm.expect(response).to.have.property('storeId');",
+					"    });",
+					"}",
+					"",
+					"if (pm.request.url.path.includes('hours') && !pm.request.url.path.includes('check')) {",
+					"    pm.test('營業時間查詢應該返回有效結果', function () {",
+					"        const response = pm.response.json();",
+					"        pm.expect(response).to.be.an('array');",
+					"        if (response.length > 0) {",
+					"            pm.expect(response[0]).to.have.property('storeId');",
+					"        }",
+					"    });",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+} 

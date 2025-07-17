@@ -1,0 +1,56 @@
+[
+    {
+        "id": 1,
+        "name": "珍珠拿鐵",
+        "price": 85,
+        "status": "供應中",
+        "stock": 50,
+        "img": "https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "categoryId": "cat-1"
+    },
+    {
+        "id": 2,
+        "name": "西西里咖啡",
+        "price": 85,
+        "status": "供應中",
+        "stock": 30,
+        "img": "https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "categoryId": "cat-1"
+    },
+    {
+        "id": 3,
+        "name": "經典美式",
+        "price": 60,
+        "status": "供應中",
+        "stock": 100,
+        "img": "https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=600",
+        "categoryId": "cat-2"
+    },
+    {
+        "id": 4,
+        "name": "煙燻雞肉三明治",
+        "price": 90,
+        "status": "供應中",
+        "stock": 20,
+        "img": "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=600",
+        "categoryId": "cat-3"
+    },
+    {
+        "id": 5,
+        "name": "花生醬培根三明治",
+        "price": 90,
+        "status": "暫停供應",
+        "stock": 20,
+        "img": "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=600",
+        "categoryId": "cat-3"
+    },
+    {
+        "id": 6,
+        "name": "費城牛肉帕尼尼",
+        "price": 90,
+        "status": "供應中",
+        "stock": 20,
+        "img": "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=600",
+        "categoryId": "cat-4"
+    }
+]

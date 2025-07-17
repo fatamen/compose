@@ -1,4 +1,4 @@
-name: "proj"
+name: "finalproj"
 
 services:
   java:
@@ -6,18 +6,18 @@ services:
       context: ./back
       dockerfile: ./tomcat.dockerfile
       args:
-        war_file: labboot-back.war
-    container_name: proj-java
+        war_file: GoldenBowl.war
+    container_name: goldenBowl-back
     ports:
       - "9080:8080"
-  vue:
+  vue1:
     build:
-      context: ./front
+      context: ./front-cus #尋找front目錄
       dockerfile: ./nginx.dockerfile
       args:
         config_file: nginx.conf
         publish_dir: dist
-    container_name: proj-vue
+    container_name: vue-cus
     depends_on:
       - java
     environment:
@@ -25,3 +25,37 @@ services:
     ports:
       - "80:80"
       - "6173:6173"
+
+
+  vue2:
+    build:
+      context: ./front-store #尋找front目錄
+      dockerfile: ./nginx.dockerfile
+      args:
+        config_file: nginx.conf
+        publish_dir: dist
+    container_name: vue-store
+    depends_on:
+      - java
+    environment:
+      - TZ=Asia/Taipei
+    ports:
+      - "8081:80"
+      - "7173:6173"
+   
+  vue3:
+    build:
+      context: ./front-admin #尋找front目錄
+      dockerfile: ./nginx.dockerfile
+      args:
+        config_file: nginx.conf
+        publish_dir: dist
+    container_name: vue-admin #命名contain名稱
+    depends_on:
+      - java
+    environment:
+      - TZ=Asia/Taipei
+    ports:
+      - "8082:80"
+      - "9174:6173"
+ 

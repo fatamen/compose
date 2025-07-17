@@ -1,0 +1,321 @@
+{
+	"info": {
+		"_postman_id": "goldenbowl-reservation-api",
+		"name": "GoldenBowl 預約系統 API 測試",
+		"description": "預約系統的完整 API 測試集合，包含時間段獲取、可用性檢查、預約創建等功能",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "時間段管理",
+			"item": [
+				{
+					"name": "獲取餐廳所有時間段",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/booking/all-slots/{{STORE_ID}}?date={{TEST_DATE}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"booking",
+								"all-slots",
+								"{{STORE_ID}}"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{TEST_DATE}}",
+									"description": "查詢日期 (YYYY-MM-DD 格式，使用今天或未來7天內)"
+								}
+							]
+						},
+						"description": "獲取餐廳在指定日期的所有可用時間段"
+					},
+					"response": []
+				},
+				{
+					"name": "獲取已預訂時間段",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/booking/slots/{{STORE_ID}}?date={{TEST_DATE}}&guests={{TEST_GUESTS}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"booking",
+								"slots",
+								"{{STORE_ID}}"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{TEST_DATE}}",
+									"description": "查詢日期"
+								},
+								{
+									"key": "guests",
+									"value": "{{TEST_GUESTS}}",
+									"description": "用餐人數"
+								}
+							]
+						},
+						"description": "獲取餐廳在指定日期已預訂的時間段"
+					},
+					"response": []
+				}
+			],
+			"description": "時間段相關的 API 測試"
+		},
+		{
+			"name": "可用性檢查",
+			"item": [
+				{
+					"name": "檢查時間可用性",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/booking/check?storeId={{STORE_ID}}&date={{TEST_DATE}}&time={{TEST_TIME}}&guests={{TEST_GUESTS}}&duration={{TEST_DURATION}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"booking",
+								"check"
+							],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{STORE_ID}}",
+									"description": "餐廳ID"
+								},
+								{
+									"key": "date",
+									"value": "{{TEST_DATE}}",
+									"description": "預約日期"
+								},
+								{
+									"key": "time",
+									"value": "{{TEST_TIME}}",
+									"description": "預約時間"
+								},
+								{
+									"key": "guests",
+									"value": "{{TEST_GUESTS}}",
+									"description": "用餐人數"
+								},
+								{
+									"key": "duration",
+									"value": "{{TEST_DURATION}}",
+									"description": "用餐時長（分鐘）"
+								}
+							]
+						},
+						"description": "檢查特定時間是否可預約"
+					},
+					"response": []
+				}
+			],
+			"description": "可用性檢查相關的 API 測試"
+		},
+		{
+			"name": "預約管理",
+			"item": [
+				{
+					"name": "創建預約",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": {{USER_ID}},\n  \"storeId\": {{STORE_ID}},\n  \"reservedDate\": \"{{TEST_DATE}}\",\n  \"reservedTime\": \"{{TEST_TIME}}\",\n  \"guests\": {{TEST_GUESTS}},\n  \"duration\": {{TEST_DURATION}},\n  \"content\": \"測試預約 - {{TEST_CUSTOMER_NAME}}, 電話: {{TEST_PHONE}}\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/reservations",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"reservations"
+							]
+						},
+						"description": "創建新的預約記錄"
+					},
+					"response": []
+				},
+				{
+					"name": "獲取用戶預約記錄",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/reservations/user/{{USER_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"reservations",
+								"user",
+								"{{USER_ID}}"
+							]
+						},
+						"description": "獲取指定用戶的所有預約記錄"
+					},
+					"response": []
+				},
+				{
+					"name": "獲取餐廳預約記錄",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/reservations/store/{{STORE_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"reservations",
+								"store",
+								"{{STORE_ID}}"
+							]
+						},
+						"description": "獲取指定餐廳的所有預約記錄"
+					},
+					"response": []
+				},
+				{
+					"name": "取消預約",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/reservations/1?userId={{USER_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"reservations",
+								"1"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{USER_ID}}",
+									"description": "用戶ID"
+								}
+							]
+						},
+						"description": "取消指定的預約記錄"
+					},
+					"response": []
+				}
+			],
+			"description": "預約管理相關的 API 測試"
+		},
+		{
+			"name": "桌位管理",
+			"item": [
+				{
+					"name": "獲取可用桌位",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/api/reservations/tables?storeId={{STORE_ID}}&minSeats={{TEST_GUESTS}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"reservations",
+								"tables"
+							],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{STORE_ID}}",
+									"description": "餐廳ID"
+								},
+								{
+									"key": "minSeats",
+									"value": "{{TEST_GUESTS}}",
+									"description": "最少座位數"
+								}
+							]
+						},
+						"description": "獲取餐廳的可用桌位"
+					},
+					"response": []
+				}
+			],
+			"description": "桌位管理相關的 API 測試"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// 預請求腳本 - 可以在這裡添加通用的請求前處理邏輯",
+					"console.log('正在執行請求:', pm.request.name);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// 測試腳本 - 自動驗證響應",
+					"pm.test('狀態碼是 200', function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test('響應時間小於 2000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+					"});",
+					"",
+					"pm.test('響應包含數據', function () {",
+					"    const responseJson = pm.response.json();",
+					"    pm.expect(responseJson).to.not.be.null;",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "STORE_ID",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "USER_ID",
+			"value": "1",
+			"type": "string"
+		}
+	]
+} 

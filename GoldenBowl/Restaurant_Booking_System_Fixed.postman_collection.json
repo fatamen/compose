@@ -1,0 +1,501 @@
+{
+	"info": {
+		"_postman_id": "restaurant-booking-system-fixed",
+		"name": "餐廳預約系統 API (修正版)",
+		"description": "修正路徑參數問題的餐廳預約系統 API 集合",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🧪 測試相關 API",
+			"item": [
+				{
+					"name": "查詢所有用戶",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "users"]
+						}
+					}
+				},
+				{
+					"name": "查詢所有餐廳",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/stores",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "stores"]
+						}
+					}
+				},
+				{
+					"name": "查詢餐廳桌位",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/stores/{{storeId}}/tables",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "stores", "{{storeId}}", "tables"]
+						}
+					}
+				},
+				{
+					"name": "查詢餐廳時段（修正版）",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/stores/{{storeId}}/time-slots",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "stores", "{{storeId}}", "time-slots"]
+						}
+					}
+				},
+				{
+					"name": "查詢餐廳可用桌位",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/stores/{{storeId}}/available-tables",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "stores", "{{storeId}}", "available-tables"]
+						}
+					}
+				},
+				{
+					"name": "生成時段資料",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/generate-time-slots?storeId={{storeId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "generate-time-slots"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{storeId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "創建測試訂位",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/create-reservation?userId={{userId}}&storeId={{storeId}}&date={{testDate}}&time={{testTime}}&guests=4",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "create-reservation"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "{{userId}}"
+								},
+								{
+									"key": "storeId",
+									"value": "{{storeId}}"
+								},
+								{
+									"key": "date",
+									"value": "{{testDate}}"
+								},
+								{
+									"key": "time",
+									"value": "{{testTime}}"
+								},
+								{
+									"key": "guests",
+									"value": "4"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "查詢用戶訂位記錄",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/users/{{userId}}/reservations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "users", "{{userId}}", "reservations"]
+						}
+					}
+				},
+				{
+					"name": "查詢餐廳訂位記錄",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/stores/{{storeId}}/reservations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "stores", "{{storeId}}", "reservations"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "⏰ 時段管理 API",
+			"item": [
+				{
+					"name": "查詢餐廳時段（簡化版）",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/time-slots",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "time-slots"]
+						}
+					}
+				},
+				{
+					"name": "查詢特定日期時段",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/time-slots/date?date={{testDate}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "time-slots", "date"],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{testDate}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "查詢日期範圍時段",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/time-slots/date-range?startDate=2024-12-25&endDate=2024-12-31",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "time-slots", "date-range"],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2024-12-25"
+								},
+								{
+									"key": "endDate",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "新增時段",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/time-slots?day={{testDate}}&startTime=20:00&endTime=20:30&isActive=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "time-slots"],
+							"query": [
+								{
+									"key": "day",
+									"value": "{{testDate}}"
+								},
+								{
+									"key": "startTime",
+									"value": "20:00"
+								},
+								{
+									"key": "endTime",
+									"value": "20:30"
+								},
+								{
+									"key": "isActive",
+									"value": "true"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "批量生成時段",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/time-slots/generate?daysAhead=30",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "time-slots", "generate"],
+							"query": [
+								{
+									"key": "daysAhead",
+									"value": "30"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📅 預約可用性 API",
+			"item": [
+				{
+					"name": "檢查預約可用性",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/booking/check-availability?storeId={{storeId}}&date={{testDate}}&time={{testTime}}&guests=4&duration=120",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "booking", "check-availability"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{storeId}}"
+								},
+								{
+									"key": "date",
+									"value": "{{testDate}}"
+								},
+								{
+									"key": "time",
+									"value": "{{testTime}}"
+								},
+								{
+									"key": "guests",
+									"value": "4"
+								},
+								{
+									"key": "duration",
+									"value": "120"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "查詢可用時段（考慮人數）",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/booking/available-slots/{{storeId}}?date={{testDate}}&guests=4",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "booking", "available-slots", "{{storeId}}"],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{testDate}}"
+								},
+								{
+									"key": "guests",
+									"value": "4"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "查詢所有時段（不考慮人數）",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/booking/time-slots/{{storeId}}?date={{testDate}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "booking", "time-slots", "{{storeId}}"],
+							"query": [
+								{
+									"key": "date",
+									"value": "{{testDate}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "批量檢查多個時間",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/booking/batch-check?storeId={{storeId}}&date={{testDate}}&times=18:00,18:30,19:00&guests=4&duration=120",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "booking", "batch-check"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{storeId}}"
+								},
+								{
+									"key": "date",
+									"value": "{{testDate}}"
+								},
+								{
+									"key": "times",
+									"value": "18:00,18:30,19:00"
+								},
+								{
+									"key": "guests",
+									"value": "4"
+								},
+								{
+									"key": "duration",
+									"value": "120"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🏪 特殊營業時間 API",
+			"item": [
+				{
+					"name": "設定特殊休假日",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/special-hours/holiday?date=2024-12-25&reason=聖誕節休假",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "special-hours", "holiday"],
+							"query": [
+								{
+									"key": "date",
+									"value": "2024-12-25"
+								},
+								{
+									"key": "reason",
+									"value": "聖誕節休假"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "設定特殊營業時間",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/special-hours/business?date=2024-12-31&openTime=22:00&closeTime=02:00&reason=跨年延長營業",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "special-hours", "business"],
+							"query": [
+								{
+									"key": "date",
+									"value": "2024-12-31"
+								},
+								{
+									"key": "openTime",
+									"value": "22:00"
+								},
+								{
+									"key": "closeTime",
+									"value": "02:00"
+								},
+								{
+									"key": "reason",
+									"value": "跨年延長營業"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "查詢所有特殊設定",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/special-hours",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "special-hours"]
+						}
+					}
+				},
+				{
+					"name": "查詢特定日期設定",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/special-hours/date?date=2024-12-25",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "special-hours", "date"],
+							"query": [
+								{
+									"key": "date",
+									"value": "2024-12-25"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "檢查是否為休假日",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stores/{{storeId}}/special-hours/is-holiday?date=2024-12-25",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "stores", "{{storeId}}", "special-hours", "is-holiday"],
+							"query": [
+								{
+									"key": "date",
+									"value": "2024-12-25"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "storeId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "testDate",
+			"value": "2024-12-28",
+			"type": "string"
+		},
+		{
+			"key": "testTime",
+			"value": "18:30",
+			"type": "string"
+		}
+	]
+} 

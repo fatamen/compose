@@ -1,6 +1,0 @@
-server:
-  port: 8082
-
-spring:
-  datasource:
-    url: jdbc:sqlserver://localhost:1433;database=java;trustServerCertificate=true

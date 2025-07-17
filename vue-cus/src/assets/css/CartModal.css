@@ -1,0 +1,59 @@
+/* 餐廳模組 - 優雅配色主題 */
+/* 如果因為restaurant-theme衝突 那就改使用這個就好 */
+:root {
+    /* 主色調 - 黃色系(減少使用) */
+    --restaurant-primary: #ffba20;
+    --restaurant-primary-hover: #e6a61d;
+    --restaurant-primary-light: #ffcd52;
+    --restaurant-primary-dark: #766C08;
+    --restaurant-primary-rgb: 255, 186, 32;
+    /* 添加RGB值用於透明度計算 */
+
+    /* 背景色系 - 加入灰色調 */
+    --restaurant-bg-primary: #ffffff;
+    --restaurant-bg-secondary: #E7E7E7;
+    --restaurant-bg-light: #f8f8f8;
+    --restaurant-bg-card: #ffffff;
+    --restaurant-bg-accent: #fafafa;
+
+    /* 文字色系 - 深色為主 */
+    --restaurant-text-primary: #333333;
+    --restaurant-text-secondary: #766C08;
+    --restaurant-text-muted: #888888;
+    --restaurant-text-light: #aaaaaa;
+    --restaurant-text-accent: #555555;
+
+    /* 邊框色系 */
+    --restaurant-border-light: #E7E7E7;
+    --restaurant-border-medium: #cccccc;
+    --restaurant-border-dark: #999999;
+    --restaurant-border-accent: #766C08;
+
+    /* 狀態色系 */
+    --restaurant-success: #4caf50;
+    --restaurant-warning: #ff9800;
+    --restaurant-error: #f44336;
+    --restaurant-info: #2196f3;
+
+    /* 陰影色系 - 中性色調 */
+    --restaurant-shadow-light: rgba(118, 108, 8, 0.1);
+    --restaurant-shadow-medium: rgba(118, 108, 8, 0.15);
+    --restaurant-shadow-dark: rgba(118, 108, 8, 0.25);
+    --restaurant-shadow-neutral: rgba(0, 0, 0, 0.1);
+
+    /* 漸變色系 - 更柔和 */
+    --restaurant-gradient-primary: linear-gradient(135deg, #ffba20 0%, #ffcd52 100%);
+    --restaurant-gradient-subtle: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
+    --restaurant-gradient-accent: linear-gradient(135deg, #E7E7E7 0%, #f0f0f0 100%);
+}
+
+/* 餐廳模組專用類別 */
+.restaurant-theme {
+    /* 重置原有的主色變量 */
+    --primary-color: var(--restaurant-primary);
+    --primary-hover: var(--restaurant-primary-hover);
+    --text-primary: var(--restaurant-text-primary);
+    --text-secondary: var(--restaurant-text-secondary);
+    --text-muted: var(--restaurant-text-muted);
+    --price-color: var(--restaurant-primary-dark);
+}
