@@ -43,19 +43,5 @@ services:
       - "8081:80"
       - "7173:6173"
    
-  vue3:
-    build:
-      context: ./front-admin #尋找front目錄
-      dockerfile: ./nginx.dockerfile
-      args:
-        config_file: nginx.conf
-        publish_dir: dist
-    container_name: vue-admin #命名contain名稱
-    depends_on:
-      - java
-    environment:
-      - TZ=Asia/Taipei
-    ports:
-      - "8082:80"
-      - "9174:6173"
+ 
  
