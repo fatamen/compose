@@ -4,7 +4,7 @@ LABEL maintainer="cma@ispan.com.tw"
 ENV TZ="Asia/Taipei"
 EXPOSE 80/TCP
 EXPOSE 6173/TCP
-EXPOSE 443/TCP # 確保這裡有 443 端口
+EXPOSE 443/TCP
 
 COPY ./50x.html /usr/share/nginx/html/50x.html
 
