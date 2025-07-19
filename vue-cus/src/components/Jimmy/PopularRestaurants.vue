@@ -3,10 +3,12 @@
     <h2>附近熱門美食</h2>
     <div class="restaurant-scroll">
       <div class="restaurant-card" v-for="restaurant in restaurants" :key="restaurant.id">
-        <img
-          :src="restaurant.photo || '/path/to/default-popular-image.jpg'" :alt="restaurant.name"
-          @click="navigateToRestaurant(restaurant.id)"
-          style="cursor: pointer;"
+        <img 
+          :src="getMainImage(restaurant)" 
+          :alt="restaurant.name"
+          @click="navigateToRestaurant(restaurant.id)" 
+          @error="handleImageError"
+          style="cursor: pointer;" 
         />
         <div class="info">
           <h3>
@@ -43,6 +45,10 @@ import { ref} from 'vue'; // 引入 ref
 import { useRouter } from 'vue-router';
 import CommentModal from '@/components/Jimmy/Comment.vue'; // <-- 新增這一行
 import { useLocationStore } from '@/stores/location';
+import { useImageUrl } from '@/composables/useImageUrl.js'
+
+// 🔥 新增：使用圖片處理邏輯
+const { getImageUrl, defaultPhoto } = useImageUrl();
 
 // 定義 Props
 const props = defineProps({  
@@ -69,6 +75,29 @@ const navigateToRestaurant = (id) => {
 const openCommentModal = (storeId) => {
   selectedStoreId.value = storeId;
   showCommentModal.value = true;
+};
+
+// 🔥 新增：處理餐廳圖片的函數
+const getMainImage = (restaurant) => {
+    // 如果沒有 photo 資料，回傳預設圖片
+    if (!restaurant.photo) {
+        return defaultPhoto;
+    }
+    
+    // 如果 photo 是字串且包含分號（多張圖片），取第一張
+    if (typeof restaurant.photo === 'string' && restaurant.photo.includes(';')) {
+        const firstImage = restaurant.photo.split(';')[0].trim();
+        return getImageUrl(firstImage);
+    }
+    
+    // 如果是單張圖片
+    return getImageUrl(restaurant.photo);
+};
+
+// 🔥 新增：圖片載入錯誤處理
+const handleImageError = (event) => {
+    console.warn('餐廳 Banner 圖片載入失敗，使用預設圖片:', event.target.src);
+    event.target.src = defaultPhoto;
 };
 </script>
 

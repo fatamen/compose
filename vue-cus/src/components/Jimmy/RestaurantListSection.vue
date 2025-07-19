@@ -2,8 +2,8 @@
   <section class="restaurant-list">
     <div class="restaurant-card" v-for="restaurant in restaurants" :key="restaurant.id">
       <div class="image-container">
-        <img :src="restaurant.photo " :alt="restaurant.name"
-          @click="navigateToRestaurant(restaurant.id)" style="cursor: pointer;" />
+        <img :src="getMainImage(restaurant)" :alt="restaurant.name" @click="navigateToRestaurant(restaurant.id)"
+          @error="handleImageError" style="cursor: pointer;" />
         <i class="favorite-icon bi"
           :class="{ 'bi-heart-fill': restaurant.isFavorited, 'bi-heart': !restaurant.isFavorited }"
           @click.stop="toggleFavorite(restaurant)">
@@ -12,7 +12,8 @@
       <div class="info">
         <h3>{{ restaurant.name }}</h3>
         <p>
-          {{ restaurant.categoryNames && restaurant.categoryNames.length > 0 ? restaurant.categoryNames.join(' / ') : '無類別' }}
+          {{ restaurant.categoryNames && restaurant.categoryNames.length > 0 ? restaurant.categoryNames.join(' / ') :
+          '無類別' }}
           •
           {{ restaurant.isOpen ? '營業中' : '休息中' }}
         </p>
@@ -20,7 +21,8 @@
             {{ restaurant.score }}★
           </span>
         </p>
-        <div class="comment-distance-group"> <span class="comment-trigger-text" @click="openComment(restaurant.id)" style="cursor: pointer;">
+        <div class="comment-distance-group"> <span class="comment-trigger-text" @click="openComment(restaurant.id)"
+            style="cursor: pointer;">
             ({{ restaurant.comments ? restaurant.comments.length : 0 }} 則評論)
           </span>
           <span v-if="restaurant.distance" class="distance-text">
@@ -30,17 +32,13 @@
       </div>
     </div>
     <div v-if="restaurants.length === 0" class="no-restaurants-message">
-        <p v-if="!restaurantDisplayStore.showAllRestaurants && currentUserId">您目前沒有收藏任何餐廳。</p>
-        <p v-else-if="!restaurantDisplayStore.showAllRestaurants && !currentUserId">請先登入以查看收藏餐廳。</p>
-        <p v-else>目前沒有符合條件的餐廳。</p>
+      <p v-if="!restaurantDisplayStore.showAllRestaurants && currentUserId">您目前沒有收藏任何餐廳。</p>
+      <p v-else-if="!restaurantDisplayStore.showAllRestaurants && !currentUserId">請先登入以查看收藏餐廳。</p>
+      <p v-else>目前沒有符合條件的餐廳。</p>
     </div>
   </section>
 
-  <Comment
-    v-if="showComment"
-    :storeId="selectedStoreId"
-    @close="showComment = false"
-  />
+  <Comment v-if="showComment" :storeId="selectedStoreId" @close="showComment = false" />
 </template>
 
 <script setup>
@@ -50,11 +48,15 @@ import Comment from '@/components/Jimmy/Comment.vue';
 import { useUserStore } from '@/stores/user';
 import axios from '@/plungins/axios.js';
 import { useRestaurantDisplayStore } from '@/stores/restaurantDisplay';
+import { useImageUrl } from '../../composables/useImageUrl.js'
 import swal from 'sweetalert2';
 
 const userStore = useUserStore();
 const currentUserId = computed(() => userStore.userId); // 獲取當前用戶ID
 const restaurantDisplayStore = useRestaurantDisplayStore();
+
+// 🔥 新增：使用圖片處理邏輯
+const { getImageUrl, defaultPhoto } = useImageUrl();
 
 const props = defineProps({
   restaurants: { // 這個 props 現在接收的是 Home.vue 經過所有篩選和模式選擇後的結果
@@ -65,7 +67,7 @@ const props = defineProps({
 });
 
 // 移除 'fetch-restaurants' 事件，因為現在 Home.vue 會監聽 Pinia store 來觸發數據更新
-const emit = defineEmits(['update:favoriteStatus']); 
+const emit = defineEmits(['update:favoriteStatus']);
 const router = useRouter();
 
 // 控制評論模態框顯示的狀態
@@ -81,6 +83,42 @@ const openComment = (storeId) => {
   console.log("User:" + userStore.userId);
   selectedStoreId.value = storeId;
   showComment.value = true;
+};
+
+// 🔥 新增：處理餐廳圖片的函數
+const getRestaurantImages = (restaurant) => {
+  // 如果沒有 photo 資料，回傳預設圖片陣列
+  if (!restaurant.photo) {
+    return [defaultPhoto];
+  }
+
+  // 如果 photo 是字串且包含分號（多張圖片）
+  if (typeof restaurant.photo === 'string' && restaurant.photo.includes(';')) {
+    return restaurant.photo.split(';')
+      .filter(path => path.trim()) // 過濾空字串
+      .map(path => getImageUrl(path.trim()));
+  }
+
+  // 如果是單張圖片
+  return [getImageUrl(restaurant.photo)];
+};
+
+// 🔥 新增：取得主要顯示圖片（第一張）
+const getMainImage = (restaurant) => {
+  const images = getRestaurantImages(restaurant);
+  return images[0];
+};
+
+// 🔥 新增：取得所有圖片數量
+const getImageCount = (restaurant) => {
+  const images = getRestaurantImages(restaurant);
+  return images.length;
+};
+
+// 🔥 新增：圖片載入錯誤處理
+const handleImageError = (event) => {
+  console.warn('餐廳圖片載入失敗，使用預設圖片:', event.target.src);
+  event.target.src = defaultPhoto;
 };
 
 // --- 收藏功能相關方法 ---
@@ -234,22 +272,30 @@ const toggleFavorite = async (restaurant) => {
 
 /* 評分單獨的行，不需要特別的 flex 樣式，它本身就是塊級元素 */
 .score-group {
-  margin-bottom: 5px; /* 讓評分和下方評論/距離組之間有間距 */
+  margin-bottom: 5px;
+  /* 讓評分和下方評論/距離組之間有間距 */
 }
 
 /* 新增的評分、評論和距離的父容器樣式 */
 .score-comment-distance-group {
-  display: flex; /* 使用 Flexbox 讓內部元素水平排列 */
-  align-items: center; /* 垂直居中對齊 */
-  gap: 5px; /* 為內部元素之間添加間距 */
-  flex-wrap: wrap; /* 允許在空間不足時換行，以防萬一 */
+  display: flex;
+  /* 使用 Flexbox 讓內部元素水平排列 */
+  align-items: center;
+  /* 垂直居中對齊 */
+  gap: 5px;
+  /* 為內部元素之間添加間距 */
+  flex-wrap: wrap;
+  /* 允許在空間不足時換行，以防萬一 */
 }
 
 /* 公里數文字樣式 */
 .distance-text {
-  font-size: 13px; /* 保持你想要的字體大小 */
-  color: #666; /* 保持顏色 */
-  white-space: nowrap; /* 防止距離數字換行 */
+  font-size: 13px;
+  /* 保持你想要的字體大小 */
+  color: #666;
+  /* 保持顏色 */
+  white-space: nowrap;
+  /* 防止距離數字換行 */
 }
 
 /* 新增的評論觸發文字樣式 */

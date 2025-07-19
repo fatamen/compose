@@ -86,8 +86,10 @@ public class DatabaseInitializer implements CommandLineRunner {
         UserBean user = new UserBean();
         user.setName("測試用戶");
         user.setEmail("test@example.com");
+        user.setPassword("password"); // 設定密碼
         user.setPhone("0912345678");
         user.setIsActive(true);
+        user.setIsVerify(true); // 設定為已驗證
         return user;
     }
 

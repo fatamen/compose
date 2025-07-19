@@ -39,14 +39,14 @@ public class OwnerController {
         return Map.of("success", true, "owner", dto);
     }
 
-
-	@PostMapping("/check-email")
+    @PostMapping("/check-email")
     public Map<String, Object> checkEmail(@RequestBody Map<String, String> map) {
         String email = map.get("email");
         boolean exists = ownerService.checkEmailExists(email);
         return Map.of("exists", exists);
     }
 
+    // 註冊（Create）
     @PostMapping("/register")
     public Map<String, Object> register(@RequestBody Map<String, String> map) {
         String email = map.get("email");
@@ -59,13 +59,16 @@ public class OwnerController {
         }
         return Map.of("success", true, "ownerId", owner.getId());
     }
-    
+
+    // 登入
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody Map<String, String> map) {
         String email = map.get("email");
         String pwd = map.get("password");
+        System.out.println("login email: " + email + ", pwd: " + pwd);
         OwnerBean owner = ownerService.findByEmailAndPassword(email, pwd);
         if (owner == null) {
+            System.out.println("login fail");
             return Map.of("success", false, "message", "帳號或密碼錯誤");
         }
         // 把所需欄位全部回傳

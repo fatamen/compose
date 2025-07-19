@@ -111,7 +111,7 @@ async function onSubmit() {
                 title: '登入成功！', // 標題
                 text: '歡迎回來！', // 可以加上歡迎語句
                 showConfirmButton: false, // 不顯示確認按鈕
-                timer: 500, // 0.5 秒後自動關閉
+                timer: 500, // 0.5 秒後自動關閉 //0719 JIMMY
                 timerProgressBar: true // 顯示進度條
             });
             // userStore.setLogin({

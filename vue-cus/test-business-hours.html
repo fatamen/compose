@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營業時間 API 測試</title>
+</head>
+
+<body>
+    <h1>營業時間 API 測試</h1>
+    <button onclick="testBusinessHours()">測試營業時間 API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testBusinessHours() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '測試中...';
+
+            try {
+                // 測試完整營業時間 API
+                const response = await fetch('http://localhost:8080/api/stores/1/hours/complete');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <h3>✅ API 測試成功</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3>❌ API 測試失敗</h3>
+                        <p>狀態碼: ${response.status}</p>
+                        <p>狀態文字: ${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>❌ 網路錯誤</h3>
+                    <p>錯誤訊息: ${error.message}</p>
+                    <p>請確認後端服務是否正在運行 (http://localhost:8080)</p>
+                `;
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -104,6 +104,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user.js'
 import axios from '@/plungins/axios.js'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 const router = useRouter()
@@ -118,11 +119,8 @@ const fullName = computed({
     get: () => userStore.fullName,
     set: v => userStore.setFullName(v)
 })
-const password = computed({
-    get: () => userStore.password || '', // 一定是字串
-    set: v => userStore.setPassword(v)
-})
 
+const password = ref('')
 const showPassword = ref(false)
 const message = ref('')
 const registering = ref(false)
@@ -149,7 +147,12 @@ function togglePassword() {
 onMounted(() => {
     // 初始化 email
     if (!email.value) {
-        alert('請先輸入 email')
+        Swal.fire({
+            icon: 'warning', // 顯示警告圖示（黃色三角形）
+            title: '請注意', // 彈出框的標題
+            text: '請輸入您的 Email 地址。', // 提示的具體內容
+            confirmButtonText: '確定' // 確認按鈕的文字
+        });
         router.push('/register-email')
     }
 })
@@ -164,16 +167,19 @@ async function onSubmit() {
             email: email.value,
             password: password.value
         }
-        await axios.post('/api/users', data)
+        const res = await axios.post('/api/users', data)
+        console.log('✅ 註冊成功', res.data)
 
         // 註冊成功，同步 localStorage
         localStorage.setItem('userFullName', fullName.value.trim())
         localStorage.setItem('userEmail', email.value)
         userStore.setFullName(fullName.value.trim())
         userStore.setEmail(email.value)
-        userStore.setPassword('') // 密碼不留
-        router.push('/search')
+        
+        await router.push('/search')
+        console.log('➡️ 正在跳轉到 /search')
     } catch (e) {
+        console.error('❌ 註冊失敗', e)
         message.value = e.response?.data?.message || '註冊失敗，請稍後再試'
     } finally {
         registering.value = false

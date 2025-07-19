@@ -10,47 +10,43 @@
     </button>
 
     <p>已選擇：{{ selected?.title || '尚未選擇' }}</p>
-<!-- ✅ 訂單明細區塊 -->
+    <!-- ✅ 訂單明細區塊 -->
 
-<div class="mt-4 p-4 border rounded-3 bg-light">
-  <h5 class="fw-bold mb-3">訂單明細</h5>
+    <div class="mt-4 p-4 border rounded-3 bg-light">
+      <h5 class="fw-bold mb-3">訂單明細</h5>
 
-  <div v-if="selected" class="d-flex align-items-center mb-3">
-    <img :src="selected.imageUrl" alt="券圖片" style="width: 60px; height: auto;" class="me-3" />
-    <div>
-      <p class="mb-1 fw-bold">{{ selected.title }}</p>
-      <p class="mb-1">折扣類型：{{ selected.discountType }}</p>
-      <p class="mb-1">折扣數值：{{ selected.discountValue }}</p>
-      <p class="mb-1">使用門檻：{{ selected.minSpend }}</p>
-      <p class="mb-1">
-        有效期限：
-        {{ selected.startTime }} ～ {{ selected.endTime }}
+      <div v-if="selected" class="d-flex align-items-center mb-3">
+        <img :src="selected.imageUrl" alt="券圖片" style="width: 60px; height: auto;" class="me-3" />
+        <div>
+          <p class="mb-1 fw-bold">{{ selected.title }}</p>
+          <p class="mb-1">折扣類型：{{ selected.discountType }}</p>
+          <p class="mb-1">折扣數值：{{ selected.discountValue }}</p>
+          <p class="mb-1">使用門檻：{{ selected.minSpend }}</p>
+          <p class="mb-1">
+            有效期限：
+            {{ selected.startTime }} ～ {{ selected.endTime }}
+          </p>
+        </div>
+      </div>
+      <div v-else class="text-muted mb-3">尚未選擇優惠券</div>
+
+      <p class="mb-1">原價：{{ cartAmount }} 元</p>
+      <p class="mb-1 text-success fw-bold">
+        折扣金額：
+        {{ selected ? '-' + (cartAmount - discountedTotal) : '0' }} 元
       </p>
+      <p class="mb-0 text-danger fw-bold">應付金額：{{ discountedTotal }} 元</p>
     </div>
-  </div>
-  <div v-else class="text-muted mb-3">尚未選擇優惠券</div>
-
-  <p class="mb-1">原價：{{ cartAmount }} 元</p>
-  <p class="mb-1 text-success fw-bold">
-    折扣金額：
-    {{ selected ? '-' + (cartAmount - discountedTotal) : '0' }} 元
-  </p>
-  <p class="mb-0 text-danger fw-bold">應付金額：{{ discountedTotal }} 元</p>
-</div>
 
 
     <!-- 彈窗元件 -->
-    <CouponSelectorModal
-      v-model:show="show"
-      :promotions="promotionList"
-      :cartAmount="cartAmount"
-      @selected="handleSelected"
-    />
+    <CouponSelectorModal v-model:show="show" :promotions="promotionList" :cartAmount="cartAmount"
+      @selected="handleSelected" />
     <!-- 結帳按鈕 -->
     <button class="btn btn-success" @click="submitOrder">
-  模擬送出訂單（含優惠券）
-</button>
-<p v-if="selected">折扣：{{ cartAmount - discountedTotal }} 元</p>
+      模擬送出訂單（含優惠券）
+    </button>
+    <p v-if="selected">折扣：{{ cartAmount - discountedTotal }} 元</p>
 
   </div>
 </template>
@@ -98,56 +94,56 @@ const promotionList = ref([])
 const openCouponModal = async () => {
   try {
     const response = await axios.get('/promotions/available', {
-  params: {
-    userId: currentUser.id,
-    storeId: currentStore.id,
-    amount: cartAmount.value
-  }
-})
-console.log('🎯 後端回傳幾筆券：', response.data.length)
-console.log('🎯 回傳資料：', response.data)
+      params: {
+        userId: currentUser.id,
+        storeId: currentStore.id,
+        amount: cartAmount.value
+      }
+    })
+    console.log('🎯 後端回傳幾筆券：', response.data.length)
+    console.log('🎯 回傳資料：', response.data)
 
 
-promotionList.value = response.data.map(item => {
-  const types = []
-  let imageUrl = globalImg
-  let iconClass = 'fas fa-globe'
+    promotionList.value = response.data.map(item => {
+      const types = []
+      let imageUrl = globalImg
+      let iconClass = 'fas fa-globe'
 
-  if (item.storeId) {
-    types.push('restaurant')
-    imageUrl = restaurantImg
-    iconClass = 'fas fa-utensils'
-  }
-  if (item.tagName) {
-    types.push('food')
-    imageUrl = foodImg
-    iconClass = 'fas fa-hamburger'
-  }
-  if (item.planId) {
-    types.push('member')
-    imageUrl = memberImg
-    iconClass = 'fas fa-crown'
-  }
-  if (types.length === 0) {
-    types.push('global')
-    imageUrl = globalImg
-    iconClass = 'fas fa-globe'
-  }
+      if (item.storeId) {
+        types.push('restaurant')
+        imageUrl = restaurantImg
+        iconClass = 'fas fa-utensils'
+      }
+      if (item.tagName) {
+        types.push('food')
+        imageUrl = foodImg
+        iconClass = 'fas fa-hamburger'
+      }
+      if (item.planId) {
+        types.push('member')
+        imageUrl = memberImg
+        iconClass = 'fas fa-crown'
+      }
+      if (types.length === 0) {
+        types.push('global')
+        imageUrl = globalImg
+        iconClass = 'fas fa-globe'
+      }
 
-  return {
-    ...item,
-    iconClass,
-    imageUrl,
-    types // 確保這裡是陣列（分類用）
-  }
-})
+      return {
+        ...item,
+        iconClass,
+        imageUrl,
+        types // 確保這裡是陣列（分類用）
+      }
+    })
 
 
-// 🔍 debug 印出每張券的 types 分類
-console.log('🧾 每張券分類 types：')
-promotionList.value.forEach(p => {
-  console.log(`📌 ${p.title}：`, p.types)
-})
+    // 🔍 debug 印出每張券的 types 分類
+    console.log('🧾 每張券分類 types：')
+    promotionList.value.forEach(p => {
+      console.log(`📌 ${p.title}：`, p.types)
+    })
 
     show.value = true
   } catch (error) {

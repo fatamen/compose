@@ -25,13 +25,19 @@ const mapUrl = computed(() => {
 
 <style scoped>
 .restaurant-map {
-    width: 50%;
-    margin: 2rem 0;
+    width: 100%;
+    margin: 0;
     padding: 1.5rem;
     background: var(--restaurant-bg-light);
     border: 1px solid var(--restaurant-border-light);
     border-radius: 12px;
     box-shadow: 0 4px 12px var(--restaurant-shadow-light);
+    transition: all 0.3s ease;
+}
+
+.restaurant-map:hover {
+    box-shadow: 0 6px 20px var(--restaurant-shadow-light);
+    transform: translateY(-2px);
 }
 
 .map-title {
@@ -40,6 +46,19 @@ const mapUrl = computed(() => {
     font-weight: 600;
     margin-bottom: 1rem;
     text-shadow: 0 1px 2px var(--restaurant-shadow-light);
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.map-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--restaurant-primary);
+    border-radius: 1px;
 }
 
 .map-container {
@@ -66,7 +85,7 @@ const mapUrl = computed(() => {
 /* 響應式設計 */
 @media (max-width: 768px) {
     .restaurant-map {
-        width: 70%;
+        padding: 1rem;
     }
 
     .map-container {
@@ -77,7 +96,11 @@ const mapUrl = computed(() => {
 
 @media (max-width: 480px) {
     .restaurant-map {
-        width: 90%;
+        padding: 0.75rem;
+    }
+
+    .map-title {
+        font-size: 1.1rem;
     }
 }
 </style>

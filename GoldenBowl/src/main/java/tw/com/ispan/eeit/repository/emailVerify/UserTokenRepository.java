@@ -11,9 +11,11 @@ import tw.com.ispan.eeit.model.entity.emailVerify.UserTokenBean;
 @Repository
 public interface UserTokenRepository extends JpaRepository<UserTokenBean, Integer> {
 
-
     Optional<UserTokenBean> findByVerifyCodeAndUsedFalse(String verifyCode);
+
     Optional<UserTokenBean> findByEmail(String email);
+
     List<UserTokenBean> findByEmailAndUsedFalse(String email);
+
     Optional<UserTokenBean> findTopByEmailAndUsedTrueOrderByIdDesc(String email);
 }

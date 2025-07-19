@@ -32,6 +32,7 @@
 <script setup>
 import { ref } from 'vue'
 import axios from '@/plungins/axios.js'
+import Swal from 'sweetalert2'
 
 const props = defineProps({ show: Boolean, email: String })
 const emit = defineEmits(['close', 'send', 'back'])
@@ -40,7 +41,12 @@ const loading = ref(false)
 
 async function sendVerifyEmail() {
     if (!props.email) {
-        alert('請先輸入 email')
+        Swal.fire({
+            icon: 'warning', // 顯示警告圖示 (黃色三角形)
+            title: '請注意', // 標題
+            text: '請輸入您的 Email 地址。', // 內容文字
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
         return
     }
     loading.value = true
@@ -49,10 +55,20 @@ async function sendVerifyEmail() {
         const params = new URLSearchParams();
         params.append('email', props.email.trim());
         await axios.post('/api/send-verify-email', params);
-        alert('驗證信已寄出，請至信箱查收')
+        Swal.fire({
+            icon: 'success', // 顯示成功圖示 (綠色勾勾)
+            title: '驗證信已寄出！', // 標題
+            text: '請前往您的信箱查收驗證信，以完成後續步驟。', // 內容文字
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
         emit('send')
     } catch (e) {
-        alert('寄送失敗，請稍後再試')
+        Swal.fire({
+            icon: 'error', // 顯示錯誤圖示
+            title: '寄送失敗', // 標題
+            text: '郵件寄送時發生問題，請稍後再試一次。', // 內容文字
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
     } finally {
         loading.value = false
     }

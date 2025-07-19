@@ -13,9 +13,9 @@
         <li @click="navigateTo('VoucherWallet')" class="d-flex align-items-center gap-2 px-3 py-2">
           <i class="bi bi-ticket-perforated"></i> 優惠券
         </li>
-        <li @click="navigateTo('subscription')" class="d-flex align-items-center gap-2 px-3 py-2">
+        <!-- <li @click="navigateTo('subscription')" class="d-flex align-items-center gap-2 px-3 py-2">
           <i class="bi bi-box-seam"></i> 訂閱
-        </li>
+        </li> -->
         <!-- <li @click="navigateTo('favorites')" class="d-flex align-items-center gap-2 px-3 py-2">
           <i class="bi bi-heart"></i> 收藏管理
         </li> -->

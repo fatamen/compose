@@ -1,6 +1,10 @@
 // src/stores/user.js
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import {
+    defineStore
+} from 'pinia'
+import {
+    ref
+} from 'vue'
 
 export const useUserStore = defineStore('user', function () {
     // 這個命名方式vue import 時會被限制一定要使用 import {useUserStore} from '@/stores/user'
@@ -39,16 +43,20 @@ export const useUserStore = defineStore('user', function () {
         token.value = data;
 
     }
+
     function setPhone(data) { // <-- 新增這一行
         phone.value = data;
 
     }
+
     function setLogin(data) {
         isLogin.value = data;
     }
-     function setVerified(data) {
+
+    function setVerified(data) {
         verified.value = data;
     }
+
     function loginSuccess(data) {
         fullName.value = data.fullName || '';
         userId.value = data.userId || '';
@@ -71,14 +79,22 @@ export const useUserStore = defineStore('user', function () {
     }
 
     return {
-        fullName, setFullName,
-        email, setEmail,
-        token, setToken,
-        userId, setUserId,
-        phone, setPhone,
-        isLogin, setLogin,
-        verified, setVerified,
-        logout, loginSuccess
+        fullName,
+        setFullName,
+        email,
+        setEmail,
+        token,
+        setToken,
+        userId,
+        setUserId,
+        phone,
+        setPhone,
+        isLogin,
+        setLogin,
+        verified,
+        setVerified,
+        logout,
+        loginSuccess
     }
 }, {
     // ✨ 新增這個配置物件來啟用持久化

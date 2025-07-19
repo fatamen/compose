@@ -66,6 +66,15 @@ public class FoodBean {
 
     @Column(name = "img_resource", length = 500)
     private String imgResource;
+    
+    // 圖片上傳用
+    public String getImgResource() {
+        return imgResource;
+    }
+    
+    public void setImgResource(String imgResource) {
+        this.imgResource = imgResource;
+    }
 
     @ManyToOne
     @JoinColumn(name = "store_id")

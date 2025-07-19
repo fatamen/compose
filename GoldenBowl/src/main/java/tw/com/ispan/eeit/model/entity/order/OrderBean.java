@@ -106,5 +106,12 @@ public class OrderBean {
 				+ ", "
 				+ "]";
 	}
+	
+	@OneToOne(mappedBy = "order", fetch = FetchType.LAZY)
+	private PaymentBean payment;
+	
+//	@OneToOne
+//	@JoinColumn(name = "order_id")
+//	private OrderBean order;
 
 }

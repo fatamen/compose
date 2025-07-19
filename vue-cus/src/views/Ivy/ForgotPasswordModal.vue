@@ -56,7 +56,12 @@ const email = computed({
 
 async function onSubmit() {
     if (!email.value) {
-        alert('請輸入 email')
+        Swal.fire({
+            icon: 'warning', // 顯示一個黃色的警告圖示
+            title: '請注意', // 彈出視窗的標題
+            text: '請輸入您的 Email 地址。', // 提示的具體內容
+            confirmButtonText: '確定' // 確認按鈕的文字
+        });
         return
     }
     loading.value = true
@@ -66,11 +71,23 @@ async function onSubmit() {
         params.append('email', email.value.trim())
 
         await axios.post('/api/send-reset-password', params)
-        alert('已寄送重設密碼連結到 ' + email.value + ' 請查收')
+        Swal.fire({
+            icon: 'success', // 顯示成功圖示（綠色勾勾）
+            title: '重設密碼連結已寄出！', // 標題
+            html: `我們已將重設密碼的連結寄送到 <b>${email.value}</b>。<br>請前往您的信箱查收，並點擊連結以完成密碼重設。`, // 內容支援 HTML
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
         emit('submit', email.value)
         // 這裡也可以 emit('close') 或跳出"已寄出"的 modal
     } catch (e) {
-        alert(e.response?.data || '寄送失敗，請稍後再試')
+        const errorMessage = e.response?.data?.message || '寄送失敗，請稍後再試';
+        Swal.fire({
+            icon: 'error', // 顯示錯誤圖示
+            title: '操作失敗', // 標題
+            text: errorMessage, // 內容文字，優先顯示後端訊息，否則顯示預設訊息
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
+        
     } finally {
         loading.value = false
     }

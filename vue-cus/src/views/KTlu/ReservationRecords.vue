@@ -6,8 +6,8 @@
                 我的訂位紀錄
             </h2>
             <div class="filter-section">
-                <Select v-model="selectedStatus" :options="statusOptions" optionLabel="label" placeholder="篩選狀態"
-                    class="status-filter" />
+                <Select v-model="selectedStatus" :options="statusOptions" optionLabel="label" optionValue="value"
+                    placeholder="篩選狀態" class="status-filter" />
                 <Button label="重新整理" icon="pi pi-refresh" @click="loadRecords" class="refresh-btn" :loading="loading" />
             </div>
         </div>
@@ -96,7 +96,7 @@
                 </div>
             </div>
             <template #footer>
-                <Button label="取消" icon="pi pi-times" @click="editModalVisible = false" class="p-button-text" />
+                <Button label="取消" icon="pi pi-times" @click="cancelEdit" class="p-button-text" />
                 <Button label="確認修改" icon="pi pi-check" @click="saveEdit" :loading="saving" />
             </template>
         </Dialog>
@@ -106,7 +106,7 @@
             class="cancel-modal">
             <p>確定要取消這個預約嗎？此操作無法復原。</p>
             <template #footer>
-                <Button label="保留預約" icon="pi pi-times" @click="cancelModalVisible = false" class="p-button-text" />
+                <Button label="保留預約" icon="pi pi-times" @click="cancelCancelModal" class="p-button-text" />
                 <Button label="確認取消" icon="pi pi-check" @click="confirmCancel" :loading="cancelling"
                     class="p-button-danger" />
             </template>
@@ -123,9 +123,11 @@ import Select from 'primevue/select'
 import Dialog from 'primevue/dialog'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
+import { useUserStore } from '@/stores/user.js' // 引入用戶 store
 import '@/assets/css/restaurant-theme.css'
 
 const router = useRouter()
+const userStore = useUserStore() // 使用用戶 store
 
 // 響應式數據
 const records = ref([])
@@ -149,9 +151,10 @@ const statusOptions = ref([
     { value: null, label: '全部狀態' },
     { value: 'PENDING', label: '待確認' },
     { value: 'CONFIRMED', label: '已確認' },
-    { value: 'CANCELLED', label: '已取消' },
-    { value: 'COMPLETED', label: '已完成' }
+    { value: 'CANCELLED', label: '已取消' }
 ])
+
+
 
 // 計算屬性
 const filteredRecords = computed(() => {
@@ -165,30 +168,53 @@ const filteredRecords = computed(() => {
 const loadRecords = async () => {
     loading.value = true
     try {
-        const response = await fetch('/api/reservations/user/1')
+        // 檢查用戶是否已登入
+        if (!userStore.userId) {
+            console.log('用戶未登入，跳轉到首頁')
+            await Swal.fire({
+                title: '請先登入',
+                text: '查看訂位紀錄需要先登入',
+                icon: 'warning',
+                confirmButtonText: '確定'
+            })
+            router.push('/')
+            return
+        }
+
+        console.log('載入用戶 ID:', userStore.userId, '的訂位紀錄')
+        const response = await fetch(`/api/reservations/user/${userStore.userId}`)
+
         if (response.ok) {
             const data = await response.json()
-            // 為每個預約添加餐廳名稱和用戶姓名
+            console.log('獲取到的訂位紀錄:', data)
+
+            // 為每個預約添加餐廳名稱，用戶姓名使用當前登入用戶的資料
             const recordsWithDetails = await Promise.all(
                 data.map(async (record) => {
-                    const [storeName, userName] = await Promise.all([
-                        getStoreName(record.storeId),
-                        getUserName(record.userId)
-                    ])
+                    const storeName = await getStoreName(record.storeId)
                     return {
                         ...record,
                         storeName: storeName,
-                        userName: userName
+                        userName: userStore.fullName || '當前用戶' // 使用當前登入用戶的姓名
                     }
                 })
             )
             records.value = recordsWithDetails
+            console.log('處理後的訂位紀錄:', records.value)
         } else {
             throw new Error('載入失敗')
         }
     } catch (error) {
         console.error('載入預約紀錄失敗:', error)
         records.value = []
+
+        // 顯示錯誤訊息
+        await Swal.fire({
+            title: '載入失敗',
+            text: '無法載入訂位紀錄，請稍後再試',
+            icon: 'error',
+            confirmButtonText: '確定'
+        })
     } finally {
         loading.value = false
     }
@@ -210,22 +236,7 @@ const getStoreName = async (storeId) => {
     }
 }
 
-// 根據用戶 ID 獲取用戶姓名
-const getUserName = async (userId) => {
-    try {
-        const response = await fetch(`/api/users/${userId}`)
-        if (response.ok) {
-            const user = await response.json()
-            return user.name || '未知用戶'
-        } else {
-            return '未知用戶'
-        }
-    } catch (error) {
-        console.error('獲取用戶姓名失敗:', error)
-        // 如果 JSON 解析失敗，返回預設值
-        return '未知用戶'
-    }
-}
+
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -253,8 +264,7 @@ const getStatusText = (status) => {
     const statusMap = {
         'PENDING': '待確認',
         'CONFIRMED': '已確認',
-        'CANCELLED': '已取消',
-        'COMPLETED': '已完成'
+        'CANCELLED': '已取消'
     }
     return statusMap[status] || status
 }
@@ -298,13 +308,27 @@ const editRecord = (record) => {
     editModalVisible.value = true
 }
 
+// 取消編輯
+const cancelEdit = () => {
+    editModalVisible.value = false
+    editingRecord.value = null
+    editForm.value = {
+        guests: 0,
+        content: ''
+    }
+}
+
 // 保存編輯
 const saveEdit = async () => {
     if (!editingRecord.value) return
 
     saving.value = true
     try {
-        const response = await fetch(`/api/reservations/${editingRecord.value.id}`, {
+        console.log('開始修改預約，ID:', editingRecord.value.id)
+        console.log('修改內容:', editForm.value)
+
+        // 先更新預約資訊
+        const updateResponse = await fetch(`/api/reservations/${editingRecord.value.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -312,28 +336,70 @@ const saveEdit = async () => {
             body: JSON.stringify(editForm.value)
         })
 
-        const result = await response.json()
-        console.log('修改預約響應:', result)
+        console.log('更新預約響應狀態:', updateResponse.status)
+        const updateResult = await updateResponse.json()
+        console.log('修改預約響應:', updateResult)
 
-        if (result.success) {
-            await Swal.fire({
-                title: '修改成功',
-                text: '預約資訊已更新',
-                icon: 'success'
+        // 檢查更新是否成功（後端可能沒有 success 欄位）
+        if (updateResponse.ok) {
+            console.log('預約資訊更新成功，開始更新狀態')
+
+            // 再更新狀態為 PENDING
+            const statusResponse = await fetch(`/api/reservations/${editingRecord.value.id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: 'PENDING'
+                })
             })
 
-            // 更新本地數據
-            const index = records.value.findIndex(r => r.id === editingRecord.value.id)
-            if (index !== -1) {
-                records.value[index] = { ...records.value[index], ...editForm.value }
-            }
+            console.log('狀態更新響應狀態:', statusResponse.status)
 
-            // 只有在成功時才關閉表單
-            editModalVisible.value = false
-            editingRecord.value = null
+            if (statusResponse.ok) {
+                console.log('狀態更新成功，準備關閉 dialog')
+
+                // 先更新本地數據
+                const index = records.value.findIndex(r => r.id === editingRecord.value.id)
+                if (index !== -1) {
+                    records.value[index] = {
+                        ...records.value[index],
+                        ...editForm.value,
+                        status: 'PENDING'
+                    }
+                }
+
+                // 先關閉 dialog，再顯示成功訊息
+                console.log('關閉編輯 dialog')
+                editModalVisible.value = false
+                editingRecord.value = null
+
+                // 重置表單
+                editForm.value = {
+                    guests: 0,
+                    content: ''
+                }
+
+                // 強制確保 dialog 關閉
+                setTimeout(() => {
+                    editModalVisible.value = false
+                }, 100)
+
+                // 最後顯示成功訊息
+                await Swal.fire({
+                    title: '修改成功',
+                    text: '預約資訊已更新，狀態已設為待確認',
+                    icon: 'success'
+                })
+            } else {
+                const statusResult = await statusResponse.json()
+                console.error('狀態更新失敗:', statusResult)
+                throw new Error('狀態更新失敗: ' + (statusResult.message || statusResponse.statusText))
+            }
         } else {
             // 失敗時不關閉表單，讓用戶可以修正
-            throw new Error(result.errorMessage || '修改失敗')
+            throw new Error(updateResult.message || updateResult.errorMessage || '修改失敗')
         }
     } catch (error) {
         console.error('修改預約失敗:', error)
@@ -354,13 +420,76 @@ const cancelRecord = (record) => {
     cancelModalVisible.value = true
 }
 
+// 取消取消預約的 modal
+const cancelCancelModal = () => {
+    cancelModalVisible.value = false
+    cancellingRecord.value = null
+}
+
 // 確認取消
 const confirmCancel = async () => {
     if (!cancellingRecord.value) return
 
     cancelling.value = true
     try {
-        const response = await fetch(`/api/reservations/${cancellingRecord.value.id}/status`, {
+        const recordToCancel = cancellingRecord.value // 保存要取消的記錄
+        console.log('開始取消預約，ID:', recordToCancel.id)
+
+        // 先關閉確認 dialog
+        console.log('關閉取消確認 dialog')
+        cancelModalVisible.value = false
+        cancellingRecord.value = null
+
+        // 強制確保 dialog 關閉
+        setTimeout(() => {
+            cancelModalVisible.value = false
+        }, 100)
+
+        // 顯示倒數確認對話框
+        let countdown = 3
+        const result = await Swal.fire({
+            title: '確認取消預約',
+            html: `
+                <div style="text-align: center;">
+                    <p>確定要取消這個預約嗎？</p>
+                    <p style="font-size: 2rem; color: #dc3545; font-weight: bold;" id="countdown">${countdown}</p>
+                    <p>此操作無法復原</p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '確定取消',
+            cancelButtonText: '保留預約',
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: () => {
+                const countdownElement = document.getElementById('countdown')
+                const timer = setInterval(() => {
+                    countdown--
+                    if (countdownElement) {
+                        countdownElement.textContent = countdown
+                    }
+                    if (countdown <= 0) {
+                        clearInterval(timer)
+                    }
+                }, 1000)
+            }
+        })
+
+        // 如果用戶點擊取消或倒數結束，不執行取消操作
+        if (result.dismiss === Swal.DismissReason.cancel || result.dismiss === Swal.DismissReason.timer) {
+            console.log('用戶取消操作或倒數結束')
+            return
+        }
+
+        console.log('用戶確認取消，開始執行取消操作')
+
+        // 執行取消操作
+        const response = await fetch(`/api/reservations/${recordToCancel.id}/status`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -370,28 +499,33 @@ const confirmCancel = async () => {
             })
         })
 
+        console.log('取消預約響應狀態:', response.status)
+
         if (response.ok) {
+            console.log('取消預約成功')
+
+            // 更新本地數據
+            const index = records.value.findIndex(r => r.id === recordToCancel.id)
+            if (index !== -1) {
+                records.value[index].status = 'CANCELLED'
+            }
+
+            // 顯示成功訊息
             await Swal.fire({
                 title: '取消成功',
                 text: '預約已取消',
                 icon: 'success'
             })
-
-            // 更新本地數據
-            const index = records.value.findIndex(r => r.id === cancellingRecord.value.id)
-            if (index !== -1) {
-                records.value[index].status = 'CANCELLED'
-            }
-
-            cancelModalVisible.value = false
         } else {
-            throw new Error('取消失敗')
+            const result = await response.json()
+            console.error('取消預約失敗:', result)
+            throw new Error('取消失敗: ' + (result.message || response.statusText))
         }
     } catch (error) {
         console.error('取消預約失敗:', error)
         await Swal.fire({
             title: '取消失敗',
-            text: '請稍後再試',
+            text: error.message || '請稍後再試',
             icon: 'error'
         })
     } finally {

@@ -23,7 +23,9 @@ public class OrderDTO {
     private String content;
     private String pickupTime;
     // 外部連結的部分
-
+    private String paymethod;
+    
+    
     private OrderUserDto User; // 一個存在在OrderDTO內的 UserDto
     private OrderStoreDto store;// 一個存在在OrderDTO內的StoreDTO
     private CommentResponseDTO comment;
@@ -53,6 +55,7 @@ public class OrderDTO {
         private String photo;
         private Boolean isOpen;
         private Boolean isActive;
+        private String address;
 
         public StoreBean toStoreBean() {
             StoreBean storeBean = new StoreBean();
@@ -61,6 +64,7 @@ public class OrderDTO {
             storeBean.setPhoto(this.photo);
             storeBean.setIsOpen(this.isOpen);
             storeBean.setIsActive(this.isActive);
+            storeBean.setAddress(address);
             // ... 其他屬性
             return storeBean;
         }
@@ -79,7 +83,10 @@ public class OrderDTO {
         orderDto.setPickupTime(
                 DatetimeConvert.toString(orderBean.getPickupTime(), "yyyy/MM/dd HH:mm:ss"));
         // DatetimeConvert.toString(orderBean.getPickupTime(),"M月d日 EEEE HH時mm分"));
-
+        //付款方式的處理
+        if(orderBean.getPayment()!=null) {
+        orderDto.setPaymethod(orderBean.getPayment().getMethod());
+        }
         // 複製 User 資訊
         // 檢查關聯是否已初始化且不為 null，避免 LazyInitializationException
         if (orderBean.getUser() != null &&
@@ -101,9 +108,11 @@ public class OrderDTO {
             storeDto.setPhoto(orderBean.getStore().getPhoto());
             storeDto.setIsActive(orderBean.getStore().getIsActive());
             storeDto.setIsOpen(orderBean.getStore().getIsOpen());
+            storeDto.setAddress(orderBean.getStore().getAddress());
             orderDto.setStore(storeDto);
+            
         }
-
+        
         // 複製 Comment 資訊
         // 檢查關聯是否已初始化且不為 null
         if (orderBean.getComment() != null &&

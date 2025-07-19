@@ -384,9 +384,12 @@ public class OrderService {
         order.setStore(store);
 
         if (dto.getPromotionId() != null) {
-            PromotionBean promo = new PromotionBean();
-            promo.setId(dto.getPromotionId());
+//          PromotionBean promo = new PromotionBean();
+//        	promo.setId(dto.getPromotionId());
+            PromotionBean promo = promotionRepository.getReferenceById(dto.getPromotionId());
             order.setPromotion(promo);
+            System.out.println("設定進 order 的 promotionId 是：" + order.getPromotion().getId());
+
         }
 
         order.setTotal(dto.getTotal());

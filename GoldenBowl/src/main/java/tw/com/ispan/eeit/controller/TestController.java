@@ -149,9 +149,16 @@ public class TestController {
     @GetMapping("/users/{userId}/reservations")
     public ResponseEntity<List<ReservationBean>> getUserReservations(@PathVariable Integer userId) {
         try {
+            System.out.println("=== TestController 調試 ===");
+            System.out.println("測試查詢用戶ID: " + userId + " 的訂位");
+
             List<ReservationBean> reservations = reservationService.getUserReservations(userId);
+            System.out.println("查詢結果數量: " + (reservations != null ? reservations.size() : "null"));
+
             return ResponseEntity.ok(reservations);
         } catch (Exception e) {
+            System.out.println("測試查詢失敗: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }

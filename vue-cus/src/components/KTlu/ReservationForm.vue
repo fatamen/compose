@@ -78,6 +78,7 @@ import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
 import Select from 'primevue/select'
 import TimePickerSectioned from './TimePickerSectioned.vue'
+import { useUserStore } from '@/stores/user.js' // 引入用戶 store
 import '@/assets/css/restaurant-theme.css'
 import {
     getTimeSlotsForDate,
@@ -94,13 +95,20 @@ import {
     checkStoreClosedDay
 } from '@/services/timeSlotService.js'
 
-// 定義 props 接收餐廳 ID
+// 定義 props 接收餐廳 ID 和用戶資料
 const props = defineProps({
     restaurantId: {
         type: String,
         required: true
+    },
+    userData: {
+        type: Object,
+        default: () => ({})
     }
 })
+
+// 用戶 store
+const userStore = useUserStore()
 
 const date = ref(new Date())
 const name = ref('')
@@ -502,7 +510,7 @@ const submit = async () => {
 
         // 準備預約數據
         const reservationData = {
-            userId: 1, // 暫時使用固定用戶ID，實際應該從登入狀態獲取
+            userId: userStore.userId, // 使用登入者的動態ID
             storeId: parseInt(props.restaurantId),
             reservedDate: formatDateToString(date.value),
             reservedTime: selectedTime.value,
@@ -554,6 +562,9 @@ const submit = async () => {
 onMounted(async () => {
     console.log('組件載入，開始初始化...')
 
+    // 載入用戶資料
+    loadUserData()
+
     // 顯示今天日期
     showTodayInfo()
 
@@ -578,6 +589,68 @@ watch(() => props.restaurantId, async () => {
 })
 
 
+
+// 載入用戶資料
+const loadUserData = () => {
+    try {
+        console.log('🔍 開始載入用戶資料...')
+        console.log('📦 Props userData:', props.userData)
+        console.log('🏪 Store 資料:', {
+            fullName: userStore.fullName,
+            phone: userStore.phone,
+            email: userStore.email,
+            userId: userStore.userId
+        })
+
+        // 優先使用 props 傳入的用戶資料
+        let userData = props.userData
+
+        // 如果 props 沒有資料，則從 store 獲取
+        if (!userData || Object.keys(userData).length === 0) {
+            userData = {
+                name: userStore.fullName,
+                phone: userStore.phone,
+                email: userStore.email
+            }
+            console.log('📦 從 store 獲取資料:', userData)
+        }
+
+        if (userData && Object.keys(userData).length > 0) {
+            console.log('✅ 載入用戶資料:', userData)
+
+            // 預設填入用戶姓名（如果欄位為空或只包含空白字符）
+            if (userData.name && (!name.value || name.value.trim() === '')) {
+                name.value = userData.name
+                console.log('✅ 已填入用戶姓名:', userData.name)
+            } else {
+                console.log('⚠️ 姓名欄位已有值或用戶資料中無姓名:', name.value, userData.name)
+            }
+
+            // 預設填入用戶電話（如果欄位為空或只包含空白字符）
+            if (userData.phone && (!phone.value || phone.value.trim() === '')) {
+                phone.value = userData.phone
+                console.log('✅ 已填入用戶電話:', userData.phone)
+            } else {
+                console.log('⚠️ 電話欄位已有值或用戶資料中無電話:', phone.value, userData.phone)
+            }
+
+            // 如果有其他用戶資料也可以預設填入
+            // 例如：email, address 等
+        } else {
+            console.log('❌ 未找到用戶資料，使用空白表單')
+        }
+    } catch (error) {
+        console.error('❌ 載入用戶資料失敗:', error)
+    }
+}
+
+// 監聽用戶資料變化
+watch(() => props.userData, (newUserData) => {
+    if (newUserData && Object.keys(newUserData).length > 0) {
+        console.log('用戶資料更新，重新載入:', newUserData)
+        loadUserData()
+    }
+}, { deep: true })
 
 // 監聽日期變化
 watch(date, (newDate) => {

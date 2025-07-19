@@ -24,6 +24,7 @@ import ReportType from "@/views/Jimmy/ReportType.vue"
 import ReservationRecords from '@/views/KTlu/ReservationRecords.vue'
 import CC from "@/views/Jimmy/CC.vue"
 import TagCategoryManager from "@/views/Jimmy/TagCategoryManager.vue"
+import EcpayButtom from "@/views/Ivy/EcpayButtom.vue"
 
 const routes = [{
     path: "/",
@@ -78,8 +79,9 @@ const routes = [{
     component: Register
 },
 {
-    path: '/verify-pending',
-    component: VerifyPending
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: () => import('@/views/Ivy/VerifyPending.vue')
 },
 {
     path: '/register-profile',
@@ -131,6 +133,11 @@ const routes = [{
     path: '/TagCategoryManager',
     name: 'TagCategoryManager',
     component: TagCategoryManager
+},
+{ 
+    path: '/ecpay-test',
+    name: 'EcpayButtom',
+    component: EcpayButtom
 },
 ];
 

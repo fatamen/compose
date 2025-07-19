@@ -35,10 +35,9 @@ public class GeoController {
             if (arr.length() > 0) {
                 JSONObject first = arr.getJSONObject(0);
                 return Map.of(
-                    "success", true,
-                    "lat", first.getString("lat"),
-                    "lon", first.getString("lon")
-                );
+                        "success", true,
+                        "lat", first.getString("lat"),
+                        "lng", first.getString("lon"));
             } else {
                 return Map.of("success", false, "message", "查無結果");
             }

@@ -1,36 +1,57 @@
 <template>
-    <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 80vh;">
-    <h2 class="mb-4">請驗證您的電子郵件</h2>
-    <div class="mb-3 text-secondary">
-        嗨，要完成您的個人資料設置，請驗證您的電子郵件地址。
-    </div>
-    <hr class="w-100" />
-    <button class="btn btn-main my-4 px-5" @click="handleVerify">
-        驗證電子郵件地址
-    </button>
-    <div class="mt-5 text-end w-100" style="max-width: 350px;">
-        謝謝，<br>
-        <span style="color: #ffba20; font-weight: bold;">您的 foodpanda 團隊</span>
-    </div>
+    <div class="text-center mt-5">
+        <h2>驗證中，請稍候...</h2>
     </div>
 </template>
 
 <script setup>
-import { useRouter, useRoute } from 'vue-router'
-const router = useRouter()
+import { onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import axios from '@/plungins/axios'
+import Swal from 'sweetalert2'
+
 const route = useRoute()
+const router = useRouter()
 
-// email 建議用 query 傳過來
-const email = route.query.email || ''
+    onMounted(async () => {
+        console.log('VerifyPending mounted')
+    const token = route.query.token
+    const email = route.query.email
+    console.log('token:', token, 'email:', email)
 
-function handleVerify() {
-// 這裡可以呼叫 API 查驗證狀態，成功就導頁
-router.push({
-    path: '/register-profile',
-    query: { email }
+    if (!token || !email) {
+        Swal.fire({
+        icon: 'error',
+        title: '驗證資訊缺失',
+        text: '請重新操作',
+    }).then(() => {
+        router.push('/')
+        return
+    })
+    }
+
+    try {
+        const res = await axios.get('/api/verify-email', {
+        params: { token, email }
+        })
+        await Swal.fire({
+        icon: 'success',
+        title: '驗證成功！',
+        text: res.data || '你的帳號已啟用，歡迎使用！',
+        confirmButtonText: '前往首頁'
+    })
+        router.push('/')             // ← 跳轉首頁
+    } catch (err) {
+        await Swal.fire({
+        icon: 'error',
+        title: '驗證失敗',
+        text: err.response?.data || '連結錯誤或已失效，請重新發送驗證信。',
+        confirmButtonText: '回到驗證頁'
+    })
+        router.push('/')
+    }
 })
-}
-</script>
+    </script>
 
 <style scoped>
 .btn-main {

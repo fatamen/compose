@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import tw.com.ispan.eeit.model.dto.store.SpecialHoursDTO;
 import tw.com.ispan.eeit.model.entity.store.SpecialHoursBean;
 import tw.com.ispan.eeit.service.store.SpecialHoursService;
 import tw.com.ispan.eeit.service.store.SpecialHoursService.SpecialHoursSummary;
@@ -27,9 +30,62 @@ public class SpecialHoursController {
 
     @Autowired
     private SpecialHoursService specialHoursService;
+    
+    //取得店家所有的營業時間
+    @GetMapping("/all")
+    public ResponseEntity<List<SpecialHoursDTO>> getAllSpecialHours(@PathVariable Integer storeId) {
+
+	    try {
+	
+	    // 假設 Service 層有這樣一個方法
+	
+	     List<SpecialHoursDTO> specialHours = specialHoursService.getSpecialHoursByStoreId(storeId);
+	
+	    // 這裡暫時用 getSpecialHoursByStoreIdAndDate 模擬，但需要日期參數
+	
+	    // 考慮實現一個查詢所有或未來特殊時間的方法
+	
+	   	
+	     return ResponseEntity.ok(specialHours);
+	
+	    } catch (IllegalArgumentException e) {
+	
+	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+	
+	    } catch (Exception e) {
+	
+	    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+	
+	    }
+
+    }
+    
+    
+    
+    @DeleteMapping("/{dayId}")
+    public ResponseEntity<Void> deleteById(@PathVariable Integer dayId) {
+    	
+    	 try {
+             specialHoursService.deleteById(dayId);
+             // 成功刪除後，通常返回 204 No Content (表示請求成功但沒有內容可返回)
+             return ResponseEntity.noContent().build();
+         } catch (IllegalArgumentException e) {
+             // 例如，如果 ID 不存在或格式不正確，可以返回 400 Bad Request
+             return ResponseEntity.badRequest().build();
+         } catch (Exception e) {
+             // 捕獲其他所有異常，返回 500 Internal Server Error
+             // 建議在這裡記錄日誌 (e.g., logger.error("Failed to delete special hour with ID: " + dayId, e);)
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+         }
+    }
+    
+    
+    //-----------------------------------------------------------------------
 
     /**
      * 設定特殊休假日
+     * 
+     * 
      */
     @PostMapping("/holiday")
     public ResponseEntity<SpecialHoursBean> setSpecialHoliday(
@@ -44,7 +100,7 @@ public class SpecialHoursController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
+    
     /**
      * 設定特殊營業時間
      */
@@ -84,7 +140,30 @@ public class SpecialHoursController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    
+    //儲存所有
+    @PutMapping("/saveAll") // 使用 PUT，表示對某個集合的替換或更新
+    public ResponseEntity<List<SpecialHoursDTO>> saveAllSpecialHours(
+            @PathVariable Integer storeId,
+            @RequestBody List<SpecialHoursDTO> specialHoursDTOs) {
+        try {
+            // 驗證傳入的 storeId 與 DTO 中的 storeId 是否一致 (可選，但建議)
+            boolean allMatchStoreId = specialHoursDTOs.stream()
+                    .allMatch(dto -> storeId.equals(dto.getStoreId()));
+            if (!allMatchStoreId) {
+                return ResponseEntity.badRequest().body(null); // 或返回錯誤訊息
+            }
 
+            List<SpecialHoursDTO> savedHours = specialHoursService.saveAll(specialHoursDTOs);
+            return ResponseEntity.ok(savedHours);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            // 記錄日誌
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+    
     /**
      * 查詢餐廳所有特殊設定
      */

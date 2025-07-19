@@ -9,14 +9,14 @@
                     <div class="modal-body">
                         <div class="mb-2 text-start text-secondary">註冊或登入</div>
                         <!-- Google 按鈕 -->
-                        <button class="google-btn mb-3" @click="emit('google-login')">
+                        <!-- <button class="google-btn mb-3" @click="emit('google-login')">
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google"
                                 class="google-icon">
                             <span class="google-text">透過 Google 帳戶繼續操作</span>
-                        </button>
-                        <div class="divider">
+                        </button> -->
+                        <!-- <div class="divider">
                             <span>或</span>
-                        </div>
+                        </div> -->
                         <button class="btn-main w-100 mb-2" @click="emit('login')">登入</button>
                         <button class="btn-outline w-100" @click="emit('register')">註冊</button>
                     </div>

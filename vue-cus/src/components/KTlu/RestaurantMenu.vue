@@ -1,10 +1,10 @@
-
-<script setup> //Ted 負責範圍 餐廳所有餐點 呼叫CartModal
+<script setup>//Ted 負責範圍 餐廳所有餐點 呼叫CartModal
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import apiClient from '../../plungins/axios.js'; // 導入 apiClient
 // import ItemDetailModal from './ItemDetailModal.vue'
 import { useCartStore } from '@/stores/cart'
 import '@/assets/css/restaurant-theme.css'
+import { useImageUrl } from '../../composables/useImageUrl.js'
 
 const props = defineProps({
     restaurant: {
@@ -14,6 +14,15 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['checkout'])
+
+// 🔥 圖片路徑相關處理
+const { getImageUrl, defaultPhoto } = useImageUrl();
+
+// 🔥 圖片載入失敗時的處理
+const handleImageError = (event) => {
+    console.warn('圖片載入失敗，使用預設圖片:', event.target.src);
+    event.target.src = defaultPhoto;
+};
 
 // 購物車 store
 const cartStore = useCartStore()
@@ -81,7 +90,7 @@ const getCategoryItems = (categoryName) => {
 
 const quickAddToCart = (item) => {
     const cartItem = {
-        
+
         price: item.discountPrice || item.price,
         image: item.image,
         quantity: 1,
@@ -101,7 +110,7 @@ const quickAddToCart = (item) => {
 
 const handleAddToCart = (itemToAdd) => {
     cartStore.addToCart(itemToAdd, props.restaurant)
- 
+
     // 使用購物車開啟
     // if (showItemDetail.value) {
     //     closeItemDetail()
@@ -382,9 +391,9 @@ const setupIntersectionObserver = () => {
 };
 
 // 生命周期
-onMounted(async() => {
+onMounted(async () => {
     //console.log('🏪 餐廳菜單已載入，顯示所有菜品');
-        
+
     try {
         // 獲取當前店家的 ID
         const storeId = props.restaurant.id;
@@ -527,28 +536,30 @@ onUnmounted(() => {
                         <div class="menu-grid" v-if="getCategoryItems(category.name).length > 0">
                             <div class="menu-item" v-for="item in getCategoryItems(category.name)" :key="item.id"
                                 @click="quickAddToCart(item)"><!-- 點選後開啟 -->
-                                
+
                                 <!-- 餐點內容 -->
                                 <div class="item-tags" v-if="item.tagNames && item.tagNames.length > 0">
                                     <span v-for="tag in item.tagNames" :key="tag" class="item-tag">{{ tag.name }}</span>
                                     <!-- 標籤 -->
                                 </div>
 
-                                <div class="item-image">{{ item.imgResource }}
-                                    <img :src="item.imgResource" :alt="item.name" />
+                                <div class="item-image">
+                                    <img :src="getImageUrl(item.imgResource) || getImageUrl(restaurant.image)"
+                                        :alt="item.name" @error="handleImageError" />
                                 </div>
                                 <div class="item-content">
                                     <div class="item-info">
                                         <h5 class="item-name">{{ item.name }}</h5><!--餐點名稱-->
                                         <p class="item-desc">{{ item.description }}</p><!--餐點描述-->
                                         <div class="price-section">
-                                        
+
                                             <span class="current-price">NT${{ item.discountPrice || item.price }}</span>
                                         </div>
-                                        <!-- <span v-if="item.originalPrice && item.originalPrice !== item.discountPrice" class="original-price">NT${{ item.originalPrice }} 暫時移除 --> 
+                                        <!-- <span v-if="item.originalPrice && item.originalPrice !== item.discountPrice" class="original-price">NT${{ item.originalPrice }} 暫時移除 -->
                                     </div>
                                     <div class="item-actions">
-                                        <span class="pi pi-cart-plus add-to-cart-btn" @click.stop="quickAddToCart(item)" title="加入購物車"></span>
+                                        <span class="pi pi-cart-plus add-to-cart-btn" @click.stop="quickAddToCart(item)"
+                                            title="加入購物車"></span>
                                     </div>
                                 </div>
                             </div>
@@ -560,7 +571,7 @@ onUnmounted(() => {
                 </div>
             </main>
         </div>
-   
+
         <!-- 統一由Nvaigation 處理 -->
         <!-- <CartModal 
         v-if="cartStore.isCartVisible" 
@@ -682,7 +693,7 @@ onUnmounted(() => {
     background: rgba(255, 186, 32, 0.1);
     border-color: rgba(255, 186, 32, 0.3);
     color: var(--restaurant-primary, #ffba20);
-    transform: translateY(-2px); 
+    transform: translateY(-2px);
     cursor: pointer;
 }
 

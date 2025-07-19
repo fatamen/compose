@@ -22,6 +22,7 @@
 // import tw.com.ispan.eeit.repository.emailVerify.UserTokenRepository;
 // import tw.com.ispan.eeit.service.UserService;
 
+// @CrossOrigin(origins = "http://localhost:5173")
 // @RestController
 // @RequestMapping("/api")
 // public class EmailVerifyController {

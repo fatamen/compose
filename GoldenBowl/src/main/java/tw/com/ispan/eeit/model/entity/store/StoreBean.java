@@ -66,6 +66,7 @@ public class StoreBean {
     @JsonIgnore // 忽略這個欄位的 JSON 序列化，避免 JTS Point 的無限遞歸
     private Point storeCoords;
 
+    @Column(name = "lng")
     private Double lng;
 
     private Double lat;

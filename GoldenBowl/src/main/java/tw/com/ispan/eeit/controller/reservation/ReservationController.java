@@ -74,10 +74,21 @@ public class ReservationController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<ReservationBean>> getUserReservations(@PathVariable Integer userId) {
         try {
-            // 暫時硬編碼為用戶 ID 1，直到登入功能完成
-            List<ReservationBean> reservations = reservationRepository.findByUserId(1);
+            System.out.println("=== 獲取用戶預約紀錄調試 ===");
+            System.out.println("請求的用戶ID: " + userId);
+
+            // 使用傳入的 userId 參數，並按日期排序
+            List<ReservationBean> reservations = reservationRepository.findByUserIdOrderByReservedDateDesc(userId);
+
+            System.out.println("查詢結果數量: " + (reservations != null ? reservations.size() : "null"));
+            if (reservations != null && !reservations.isEmpty()) {
+                System.out.println("第一個預約紀錄: " + reservations.get(0));
+            }
+
             return ResponseEntity.ok(reservations);
         } catch (Exception e) {
+            System.out.println("獲取用戶預約紀錄時發生錯誤: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

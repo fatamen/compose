@@ -1,13 +1,10 @@
 import { ref, watch } from 'vue';
 import { defineStore } from 'pinia';
-import { DateTime } from 'luxon'; // 引入 luxon 來處理時區和時間
 
 export const useLocationStore = defineStore('location', () => {
-    const address = ref(localStorage.getItem('userAddress') || '');
-    const coordinates = ref(JSON.parse(localStorage.getItem('userCoordinates')) || null);
-    const temperature = ref(null);
-    const localTime = ref(null); // 新增：儲存當地時間
-    const timeZone = ref(localStorage.getItem('userTimeZone') || null); // **重點：從 localStorage 讀取時區**
+    const address = ref(localStorage.getItem('userAddress') || ''); // 從 localStorage 載入地址
+    const coordinates = ref(JSON.parse(localStorage.getItem('userCoordinates')) || null); // 從 localStorage 載入座標
+    const temperature = ref(null); // 新增：儲存溫度
     const loading = ref(false);
     const error = ref('');
 
@@ -16,85 +13,17 @@ export const useLocationStore = defineStore('location', () => {
         localStorage.setItem('userAddress', newAddress);
     });
 
-    watch(coordinates, async (newCoordinates) => {
+    watch(coordinates, (newCoordinates) => {
         localStorage.setItem('userCoordinates', JSON.stringify(newCoordinates));
+        // 當座標更新時，如果座標存在，自動取得溫度
         if (newCoordinates && newCoordinates.lat && newCoordinates.lon) {
-            // 這裡不再立即呼叫 getTemperature 和 getTimeZone，因為它們會在 onMounted 或 store 初始化時處理
+            getTemperature(newCoordinates.lat, newCoordinates.lon);
         } else {
-            temperature.value = null;
-            localTime.value = null;
-            timeZone.value = null;
-            localStorage.removeItem('userTemperature'); // 清除
-            localStorage.removeItem('userTimeZone'); // 清除
+            temperature.value = null; // 如果沒有座標，則清除溫度
         }
-    }, { deep: true });
+    }, { deep: true }); // deep: true 確保當 coordinates 內部屬性變化時也能觸發
 
-    // 新增：監聽 temperature 和 timeZone 變化並存入 localStorage
-    watch(temperature, (newTemp) => {
-        if (newTemp !== null) {
-            localStorage.setItem('userTemperature', JSON.stringify(newTemp));
-        } else {
-            localStorage.removeItem('userTemperature');
-        }
-    });
-
-    // 新增：獲取時區
-    const getTimeZone = async (lat, lon) => {
-        if (!lat || !lon) {
-            timeZone.value = null;
-            localTime.value = null;
-            return;
-        }
-        try {
-            const url = `http://api.geonames.org/timezoneJSON?lat=${lat}&lng=${lon}&username=YOUR_GEONAMES_USERNAME`;
-            const response = await fetch(url);
-            const data = await response.json();
-            if (data && data.timezoneId) {
-                timeZone.value = data.timezoneId; // 設置時區時會觸發上面的 watch
-            } else {
-                console.warn('無法從 GeoNames 取得時區資料', data);
-                timeZone.value = null;
-            }
-        } catch (err) {
-            console.error('取得時區失敗:', err);
-            timeZone.value = null;
-        }
-    };
-
-    // 新增：更新當地時間
-    const updateLocalTime = () => {
-        if (!timeZone.value) {
-            localTime.value = null;
-            return;
-        }
-        const now = DateTime.now().setZone(timeZone.value);
-        localTime.value = now.toFormat('yyyy-MM-dd HH:mm:ss');
-    };
-
-    let timeInterval = null;
-    // 確保這個 setInterval 總是在 timeZone 有值時運行
-    // 並在 timeZone 變為 null 時清除
-    watch(timeZone, (newTimeZone) => {
-        if (timeInterval) {
-            clearInterval(timeInterval);
-        }
-        if (newTimeZone) {
-            updateLocalTime(); // 立即更新一次
-            timeInterval = setInterval(updateLocalTime, 60000); // 每 1 分鐘更新一次
-        }
-    });
-
-    watch(timeZone, (newTimeZone) => {
-        if (newTimeZone) {
-            localStorage.setItem('userTimeZone', newTimeZone);
-            updateLocalTime(); // 時區變化時立即更新當地時間
-        } else {
-            localStorage.removeItem('userTimeZone');
-            localTime.value = null;
-        }
-    }, { immediate: true }); // **重要：讓 timeZone 的 watch 在初始化時立即執行**
-
-    // 格式化地址（保持不變）
+    // 格式化地址 (從您的 Header 組件複製過來)
     const formatAddress = (input) => {
         if (!input.trim()) return input;
         const fullAddressRegex = /^(\S+?)([縣市])(.+?)(區|鄉|鎮|市)(.*?)(\d+號)/;
@@ -110,7 +39,7 @@ export const useLocationStore = defineStore('location', () => {
         return input;
     };
 
-    // 格式化台灣地址（保持不變）
+    // 格式化台灣地址 (從您的 Header 組件複製過來)
     const formatTaiwanAddress = (addressData) => {
         if (!addressData) return '';
         const country = addressData.country || '臺灣';
@@ -125,18 +54,20 @@ export const useLocationStore = defineStore('location', () => {
         return [country, city, district, village, road, houseNumber].filter(part => part).join('');
     };
 
-    // 取得溫度（保持不變）
+    // 新增：取得當地溫度的方法
     const getTemperature = async (lat, lon) => {
         if (!lat || !lon) {
             temperature.value = null;
             return;
         }
         try {
+            // Open-Meteo API 端點
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
             const response = await fetch(url);
             const data = await response.json();
+
             if (data && data.current_weather && typeof data.current_weather.temperature === 'number') {
-                temperature.value = data.current_weather.temperature; // 設置溫度時會觸發上面的 watch
+                temperature.value = data.current_weather.temperature;
             } else {
                 console.warn('無法從 Open-Meteo 取得溫度資料', data);
                 temperature.value = null;
@@ -147,39 +78,18 @@ export const useLocationStore = defineStore('location', () => {
         }
     };
 
-    // 新增一個初始化函數，在 Pinia store 被使用時立即執行
-    // 或者在 getCoordinates/getCurrentLocation 成功後呼叫
-    const initializeLocationData = async () => {
-        if (coordinates.value && coordinates.value.lat && coordinates.value.lon) {
-            if (temperature.value === null) { // 只有當溫度為空時才去獲取
-                await getTemperature(coordinates.value.lat, coordinates.value.lon);
-            }
-            if (timeZone.value === null) { // 只有當時區為空時才去獲取
-                await getTimeZone(coordinates.value.lat, coordinates.value.lon);
-            }
-        }
-    };
 
-    // 在 store 首次被載入時執行初始化
-    // 或者您可以在 App.vue 的 onMounted 中呼叫 locationStore.initializeLocationData()
-    if (coordinates.value && (temperature.value === null || timeZone.value === null)) {
-        initializeLocationData();
-    }
-
-    // 查詢座標（保持不變）
+    // 查詢座標 (修改為 Store 內部方法)
     const getCoordinates = async (inputAddress) => {
         const addrToSearch = inputAddress ? formatAddress(inputAddress) : formatAddress(address.value);
         if (!addrToSearch.trim()) {
             error.value = '請輸入地址';
             coordinates.value = null;
-            temperature.value = null;
-            localTime.value = null; // 清空當地時間
-            timeZone.value = null; // 清空時區
             return false;
         }
         loading.value = true;
         error.value = '';
-        coordinates.value = null;
+        coordinates.value = null; // 在查詢前清空舊座標
         try {
             const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addrToSearch)}`;
             const response = await fetch(url, {
@@ -188,30 +98,26 @@ export const useLocationStore = defineStore('location', () => {
             const data = await response.json();
             if (data.length > 0) {
                 coordinates.value = { lat: data[0].lat, lon: data[0].lon };
-                address.value = addrToSearch;
+                address.value = addrToSearch; // 確保地址和座標同步
+                // 成功取得座標後，立即取得溫度
+                await getTemperature(coordinates.value.lat, coordinates.value.lon);
                 return true;
             } else {
                 error.value = '無法找到該地址的座標';
-                coordinates.value = null;
-                temperature.value = null;
-                localTime.value = null; // 清空當地時間
-                timeZone.value = null; // 清空時區
+                coordinates.value = null; // 無法找到座標時清空
                 return false;
             }
         } catch (err) {
             error.value = '查詢失敗，請稍後再試';
             console.error('API 錯誤:', err);
-            coordinates.value = null;
-            temperature.value = null;
-            localTime.value = null; // 清空當地時間
-            timeZone.value = null; // 清空時區
+            coordinates.value = null; // 查詢失敗時清空
             return false;
         } finally {
             loading.value = false;
         }
     };
 
-    // 獲取當前位置（保持不變）
+    // 獲取當前位置 (修改為 Store 內部方法)
     const getCurrentLocation = async () => {
         if (!navigator.geolocation) {
             alert('您的瀏覽器不支援定位功能');
@@ -230,7 +136,9 @@ export const useLocationStore = defineStore('location', () => {
             const data = await response.json();
             if (data && data.display_name) {
                 address.value = formatTaiwanAddress(data.address);
-                coordinates.value = { lat: latitude, lon: longitude };
+                coordinates.value = { lat: latitude, lon: longitude }; // 也要保存當前位置的座標
+                // 成功取得當前位置後，立即取得溫度
+                await getTemperature(latitude, longitude);
                 return true;
             } else {
                 alert('無法解析地址，請稍後再試');
@@ -245,7 +153,7 @@ export const useLocationStore = defineStore('location', () => {
         }
     };
 
-    // 設定地址（保持不變）
+    // 設定地址 (用於外部直接設定，例如從路由參數)
     const setAddress = (newAddress) => {
         address.value = newAddress;
     };
@@ -253,17 +161,12 @@ export const useLocationStore = defineStore('location', () => {
     return {
         address,
         coordinates,
-        temperature,
-        localTime, // 暴露當地時間
-        timeZone, // 暴露時區
+        temperature, // 暴露溫度狀態
         loading,
         error,
         setAddress,
         getCoordinates,
         getCurrentLocation,
-        getTemperature,
-        getTimeZone, // 暴露時區方法（可選）
-        updateLocalTime, // 暴露時間更新方法（可選）
-        initializeLocationData // 暴露這個初始化方法
+        getTemperature, // 暴露溫度方法 (雖然通常會自動觸發，但暴露出來也無妨)
     };
 });

@@ -6,27 +6,26 @@ spring:
   application:
     name: GoldenBowl
 
-
   output:
     ansi:
       enabled: always
 
   #設定profile
   # profiles:
-  #   active: "@xxx@" 
+  #   active: "@xxx@"
 
   #設定資料庫執行環境
   datasource:
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-    # url: jdbc:sqlserver://192.168.36.81:5433;database=java;trustServerCertificate=true
-    url: jdbc:sqlserver://localhost:1433;database=back2;trustServerCertificate=true
-    # url: jdbc:sqlserver://localhost:1433;database=back;trustServerCertificate=true
+    url: jdbc:sqlserver://192.168.36.62:9433;database=back2;trustServerCertificate=true
+    # url: jdbc:sqlserver://localhost:1433;database=back2;trustServerCertificate=true
+    # url: jdbc:sqlserver://localhost:1433;database=back2;trustServerCertificate=true
     username: sa
     password: P@ssw0rd
 
   # 設定JPA
   jpa:
-    show-sql: true 
+    show-sql: true
     #顯示資料庫語法
     database-platform: org.hibernate.dialect.SQLServerDialect # 讓java語法轉為SQL語法
     hibernate:
@@ -37,12 +36,12 @@ spring:
         #會自動捕捉entity讓你不用備註column
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         #連結資料庫讓名稱與java相同
-#mogodb的設定
-#  data:
-#    mongodb:
-#      host: localhost
-#      port: 27017
-#      database: textdb
+  #mogodb的設定
+  #  data:
+  #    mongodb:
+  #      host: localhost
+  #      port: 27017
+  #      database: textdb
 
   #設定Jackson的日期轉換格式
   jackson:
@@ -60,3 +59,9 @@ spring:
             scope:
               - email
               - profile
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB

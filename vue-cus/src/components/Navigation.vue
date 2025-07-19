@@ -51,30 +51,31 @@
           <button class="btn position-relative" style="background: transparent; border: none;" @click="showCart"
             title="購物車">
             <i class="bi bi-cart4 text-white"></i>
-            </button>
+          </button>
         </div>
       </div>
     </div>
   </header>
 
-  
+
   <!-- 購物車模態框 -->
   <CartModal v-if="isCartVisible" :cartByRestaurant="cartByRestaurant" :totalAmount="totalAmount" @close="hideCart"
     @update-quantity="updateQuantity" @remove-item="removeItem" @checkout-restaurant="handleCheckoutRestaurant"
     @clear-restaurant="clearRestaurant" />
-    <!-- 預備結帳畫面  ted--> 
-  <CheckOrderModal :isVisible="isCheckOrderVisible" :orderItems="currentCheckoutItems" :restId="Number(restId)" 
+  <!-- 預備結帳畫面  ted-->
+  <CheckOrderModal :isVisible="isCheckOrderVisible" :orderItems="currentCheckoutItems" :restId="Number(restId)"
     @add-to-cart="handleConfirmCheckout" @close="hideCheckOrderModal" />
 
   <section class="popout" v-if="showPopout">
     <div class="popout-content">
       <button class="close-btn" @click="showPopout = false">✕</button>
       <input type="text" placeholder="輸入您的地址" @focus="locationStore.setAddress('')" v-model="locationStore.address" />
-      <button class="search-btn" @click="locationStore.address.trim() ? searchAddress() : getCurrentLocationAndNavigate()">搜尋</button>
+      <button class="search-btn"
+        @click="locationStore.address.trim() ? searchAddress() : getCurrentLocationAndNavigate()">搜尋</button>
     </div>
   </section>
 
-  <AuthModals ref="authModalsRef" /> 
+  <AuthModals ref="authModalsRef" />
 </template>
 
 <script setup>
@@ -89,7 +90,7 @@ import { useCartStore } from '@/stores/cart';
 import { useLocationStore } from '@/stores/location'; // <-- 導入新的 location store
 import { useRestaurantDisplayStore } from '@/stores/restaurantDisplay';
 import Swal from 'sweetalert2';
-import { useUserStore } from '@/stores/user.js'; 
+import { useUserStore } from '@/stores/user.js';
 import axios from '@/plungins/axios.js';
 
 // 位置 store
@@ -99,7 +100,7 @@ const restaurantDisplayStore = useRestaurantDisplayStore();
 const userStore = useUserStore(); // 實例化 userStore
 const authModalsRef = ref(null); // 引用 AuthModals
 const userId = ref(null); // 用於存儲從 Pinia 獲取的用戶 ID
-const isLoggedIn = computed(()=> userStore.isLogin);
+const isLoggedIn = computed(() => userStore.isLogin);
 // const isLoggedIn = ref(true); // 根據實際登入狀態設定
 
 const isMenuOpen = ref(false);
@@ -126,9 +127,9 @@ const getRestaurantCart = (restaurantId) => cartStore.getRestaurantCart(restaura
 // 訂單確認模態框相關狀態 (新增) ted
 const isCheckOrderVisible = ref(false);
 const currentCheckoutItems = ref([]); // 用於儲存要傳遞給 CheckOrderModal 的商品
-const restId=ref(1);
+const restId = ref(1);
 // 儲存準備結帳的訂單
-const getCheckOrder =()=>restId;
+const getCheckOrder = () => restId;
 
 
 
@@ -156,9 +157,9 @@ const handleCheckoutRestaurant = (restaurantId) => {
     });
   }
 };
-const handleConfirmCheckout = (restaruantId,orderData) => {
+const handleConfirmCheckout = (restaruantId, orderData) => {
   // 結帳送出訂單
-  if (!userId.value) { 
+  if (!userId.value) {
     // 開啟登入畫面
     console.log('開啟登入畫面')
 
@@ -166,26 +167,104 @@ const handleConfirmCheckout = (restaruantId,orderData) => {
 
   //如果沒辦法取得userId.value暫時給值 4
   const body = {
-    user :{
-    id: userId.value // 假設您的 Pinia store 中有 userId 屬性
+    user: {
+      id: userId.value // 假設您的 Pinia store 中有 userId 屬性
 
     }
   }
   // 將 body 的屬性複製到 existingObject (修改 existingObject)
   // Object.assign(target, source1, source2, ...);
-  Object.assign( getRestaurantCart(restaruantId), orderData,body);
+  Object.assign(getRestaurantCart(restaruantId), orderData, body);
   isCheckOrderVisible.value = false;
 
   const order =cartStore.checkoutSingleRestaurant(restaruantId)
-
-
   // 寫上ajax
   axios.post('/api/orders', order).then((response) => {
     // 請求成功的處理邏輯
     console.log('訂單已成功送出', response.data);
+    const newOrder = response.data;
+    //新增刷卡付款 
+    if (orderData.method === 'credit') {
+      // 👇 直接呼叫後端綠界 API（假設你後端是在 8080 port）
+      console.log(JSON.stringify({
+        orderId: newOrder.id,
+        description: newOrder.content,
+        amount: newOrder.total
+      }));
+      
+      const foodList = order.orderDetails
+      const foodNameList =foodList.map(foodList => 
+      `${foodList.food.name} ${foodList.quantity} x ${foodList.price}元`).join('#');
+      
+     
+     
+      // -----------------------------------------
+      // ------------------------------
+      fetch('http://localhost:8080/api/payment/create', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    orderId: newOrder.id,
+    description: newOrder.content,
+    amount: newOrder.total,
+    foodNameList:foodNameList,
+    createTime: newOrder.createTime,
+  })
+})
+.then(res => res.text())
+.then(data => {
+  console.log('取得的', data);
+
+
+  const isEcpayForm = (
+    typeof data === 'string' &&
+    data.trim().startsWith('<form') &&
+    data.includes('payment-stage.ecpay.com.tw')
+  );
+
+  if (isEcpayForm) {
+    // ➜ 只在這裡 submit
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = data;
+    document.body.appendChild(wrapper);
+    const form = wrapper.querySelector('form');
+    if (form) {
+      form.setAttribute('target', '_blank');
+      form.submit();
+    }
+    // internalOrderItems.value = [];
+    // bsModal.hide();
+  } else {
+    // 不是綠界表單就只彈 Swal，return 阻止往下執行
+    Swal.fire({
+      icon: 'error',
+      title: '付款失敗',
+      text: typeof data === 'string' ? data : ((data && data.message) || '未知錯誤，請聯繫客服')
+    });
+    return; // <<==== 這裡很重要！加這行！
+  }
+
+
+})
+.catch(err => {
+  // ➜ fetch 自己的錯誤（斷線、連不到後端）
+  console.log('金流錯誤:', err);
+  Swal.fire({
+    icon: 'error',
+    title: '付款流程異常',
+    text: '無法連線金流服務，請稍後再試'
+  });
+});
+
+
+
+
+      // -----------------------------------------------------------------------
+    }
+
   }).catch((error) => {
     // 請求失敗的處理邏輯
-    console.error('訂單送出失敗', error);
+    console.error('訂單送出失敗:', error);
   })
 
   console.log('ajax使用',order)
@@ -205,6 +284,7 @@ const handleConfirmCheckout = (restaruantId,orderData) => {
       // router.push('/orders');
     }
   });
+
 };
 
 
@@ -269,34 +349,34 @@ const getCurrentLocationAndNavigate = async () => {
 
 // 點擊外部關閉下拉選單
 const handleClickOutside = (event) => {
-    if (!event.target.closest('.user-dropdown-container') && !event.target.closest('.notification-list')) {
-        showDropdown.value = false;
-        isNotificationOpen.value = false; // 同時關閉通知列表
-    }
+  if (!event.target.closest('.user-dropdown-container') && !event.target.closest('.notification-list')) {
+    showDropdown.value = false;
+    isNotificationOpen.value = false; // 同時關閉通知列表
+  }
 };
 
 // --- Lifecycle Hooks ---
 onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
-    userId.value = userStore.userId; // 假設您的 Pinia store 中有 userId 屬性
-    // 這裡不再需要特別從路由設定地址，因為 locationStore 在初始化時會從 localStorage 讀取
-    // 只有當路由的 address 參數存在且與 store 中的地址不同時，才更新 store
-    if (route.query.address && route.query.address !== locationStore.address) {
-        locationStore.setAddress(route.query.address);
-    }
+  document.addEventListener('click', handleClickOutside);
+  userId.value = userStore.userId; // 假設您的 Pinia store 中有 userId 屬性
+  // 這裡不再需要特別從路由設定地址，因為 locationStore 在初始化時會從 localStorage 讀取
+  // 只有當路由的 address 參數存在且與 store 中的地址不同時，才更新 store
+  if (route.query.address && route.query.address !== locationStore.address) {
+    locationStore.setAddress(route.query.address);
+  }
 });
 
 onUnmounted(() => {
-    document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('click', handleClickOutside);
 });
 
 // 監聽路由變化，並同步到 locationStore
 // 只有當路由參數提供了一個非空的新地址時才更新 store
 // 這樣可以避免在導航到不帶地址參數的頁面時，清除 store 中已有的地址
 watch(() => route.query.address, (newAddress) => {
-    if (newAddress && newAddress !== locationStore.address) {
-        locationStore.setAddress(newAddress);
-    }
+  if (newAddress && newAddress !== locationStore.address) {
+    locationStore.setAddress(newAddress);
+  }
 });
 
 

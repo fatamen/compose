@@ -39,6 +39,7 @@
 import { computed, ref } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import axios from '@/plungins/axios.js'
+import Swal from 'sweetalert2'
 
 const props = defineProps({ show: Boolean })
 const emit = defineEmits(['close', 'submit', 'back'])
@@ -58,7 +59,12 @@ const  goemit = (e) => {
 
 async function submitEmail() {
     if (!email.value) {
-        alert('請輸入 email')
+        Swal.fire({
+            icon: 'warning', // 顯示警告圖示（黃色三角形）
+            title: '請注意', // 彈出框的標題
+            text: '請輸入您的 Email 地址。', // 提示的具體內容
+            confirmButtonText: '確定' // 確認按鈕的文字
+        });
         return
     }
     loading.value = true
@@ -68,10 +74,20 @@ async function submitEmail() {
             // 記得 pinia 狀態已同步，不用再 set localStorage
             emit('submit', email.value)
         } else {
-            alert('此 email 已註冊，請用其他 email')
+            Swal.fire({
+                icon: 'warning', // 顯示警告圖示
+                title: 'Email 已被使用', // 標題
+                text: '此 Email 地址已被註冊，請使用其他 Email 進行註冊。', // 內容文字
+                confirmButtonText: '確定' // 確認按鈕文字
+            });
         }
     } catch (err) {
-        alert('伺服器錯誤或網路異常，請稍後再試')
+        Swal.fire({
+            icon: 'error', // 顯示錯誤圖示
+            title: '連線異常', // 標題
+            text: '伺服器錯誤或網路異常，請檢查您的網路連線或稍後再試。', // 內容文字
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
     } finally {
         loading.value = false
     }

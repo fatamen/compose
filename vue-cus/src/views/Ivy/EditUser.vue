@@ -71,7 +71,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from '@/plungins/axios.js'
 import { useUserStore } from '@/stores/user.js'
-
+import Swal from 'sweetalert2'
     const router = useRouter()
     function goBack() {
         router.back()
@@ -168,7 +168,12 @@ import { useUserStore } from '@/stores/user.js'
     // 儲存
     async function handleSave() {
     if (!userId.value) {
-        alert('找不到會員ID 無法更新')
+        Swal.fire({
+            icon: 'error', // 顯示錯誤圖示
+            title: '更新失敗', // 標題
+            text: '找不到對應的會員 ID，因此無法更新資料。', // 內容文字
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
         return
     }
     saveLoading.value = true
@@ -191,9 +196,21 @@ import { useUserStore } from '@/stores/user.js'
         phone: user.phone || '',
         email: user.email || ''
         }
-        alert('更新成功')
+        Swal.fire({
+            icon: 'success', // 顯示成功圖示 (綠色勾勾)
+            title: '更新成功！', // 標題
+            text: '您的資料已成功更新。', // 內容文字
+            showConfirmButton: false, // 不顯示確認按鈕
+            timer: 1500, // 1.5 秒後自動關閉
+            timerProgressBar: true // 顯示進度條
+        });
     } catch {
-        alert('更新失敗')
+        Swal.fire({
+            icon: 'error', // 顯示錯誤圖示
+            title: '更新失敗', // 標題
+            text: '資料更新時發生錯誤，請稍後再試。', // 內容文字
+            confirmButtonText: '確定' // 確認按鈕文字
+        });
     } finally {
         saveLoading.value = false
     }

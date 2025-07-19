@@ -54,39 +54,35 @@ public interface StoreRepository extends JpaRepository<StoreBean, Integer> {
         @Query("SELECT COUNT(fs) > 0 FROM UserBean u JOIN u.favoriteStores fs WHERE u.id = :userId AND fs.id = :storeId")
         boolean existsFavoriteByUserIdAndStoreId(@Param("userId") Integer userId, @Param("storeId") Integer storeId);
 
-
-         // 修改：回傳該Owner的所有Store（包含相關資料）
+        // 修改：回傳該Owner的所有Store（包含相關資料）
         @EntityGraph(attributePaths = { "categories", "foods", "foods.tags", "owner" })
         List<StoreBean> findByOwner_Id(Integer ownerId);
 
-        
-    // 新增：獲取Owner的最新Store（按建立時間排序）
-    @Query("SELECT s FROM StoreBean s " +
-           "LEFT JOIN FETCH s.categories " +
-           "LEFT JOIN FETCH s.foods " +
-           "WHERE s.owner.id = :ownerId " +
-           "ORDER BY s.createdTime DESC")
-    List<StoreBean> findByOwnerIdOrderByCreatedTimeDesc(@Param("ownerId") Integer ownerId);
-    
-    // 新增：獲取Owner的主要Store（第一個建立的）
-    @Query("SELECT s FROM StoreBean s " +
-           "LEFT JOIN FETCH s.categories " +
-           "LEFT JOIN FETCH s.foods " +
-           "WHERE s.owner.id = :ownerId " +
-           "ORDER BY s.createdTime ASC")
-    List<StoreBean> findByOwnerIdOrderByCreatedTimeAsc(@Param("ownerId") Integer ownerId);
-    
-    // 新增：檢查Owner是否擁有指定的Store
-    @Query("SELECT COUNT(s) > 0 FROM StoreBean s WHERE s.id = :storeId AND s.owner.id = :ownerId")
-    boolean existsByIdAndOwnerId(@Param("storeId") Integer storeId, @Param("ownerId") Integer ownerId);
- 
-    // 計算Owner擁有的Store數量（效能更好）
-    long countByOwner_Id(Integer ownerId);
+        // 新增：獲取Owner的最新Store（按建立時間排序）
+        @Query("SELECT s FROM StoreBean s " +
+                        "LEFT JOIN FETCH s.categories " +
+                        "LEFT JOIN FETCH s.foods " +
+                        "WHERE s.owner.id = :ownerId " +
+                        "ORDER BY s.createdTime DESC")
+        List<StoreBean> findByOwnerIdOrderByCreatedTimeDesc(@Param("ownerId") Integer ownerId);
 
-    // 如果上面的方法名稱解析有問題，可以使用 @Query
-    @Query("SELECT COUNT(s) FROM StoreBean s WHERE s.owner.id = :ownerId")
-    long countStoresByOwnerId(@Param("ownerId") Integer ownerId);
-        
+        // 新增：獲取Owner的主要Store（第一個建立的）
+        @Query("SELECT s FROM StoreBean s " +
+                        "LEFT JOIN FETCH s.categories " +
+                        "LEFT JOIN FETCH s.foods " +
+                        "WHERE s.owner.id = :ownerId " +
+                        "ORDER BY s.createdTime ASC")
+        List<StoreBean> findByOwnerIdOrderByCreatedTimeAsc(@Param("ownerId") Integer ownerId);
 
+        // 新增：檢查Owner是否擁有指定的Store
+        @Query("SELECT COUNT(s) > 0 FROM StoreBean s WHERE s.id = :storeId AND s.owner.id = :ownerId")
+        boolean existsByIdAndOwnerId(@Param("storeId") Integer storeId, @Param("ownerId") Integer ownerId);
+
+        // 計算Owner擁有的Store數量（效能更好）
+        long countByOwner_Id(Integer ownerId);
+
+        // 如果上面的方法名稱解析有問題，可以使用 @Query
+        @Query("SELECT COUNT(s) FROM StoreBean s WHERE s.owner.id = :ownerId")
+        long countStoresByOwnerId(@Param("ownerId") Integer ownerId);
 
 }

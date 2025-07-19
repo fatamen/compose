@@ -64,7 +64,7 @@
         @close="closeSuccess"/>
 </template>
 <script setup>
-
+import Swal from 'sweetalert2';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter ,useRoute } from 'vue-router';
 import { useUserStore }  from '@/stores/user.js'
@@ -100,7 +100,14 @@ function handleRegisterEmail(email) {
 }
 //第三步， 寄送驗證信
 function handleSendVerification(email) {
-    alert(`已寄出驗證信到 ${userEmail.value}`);
+    // 當你需要顯示提示時
+    Swal.fire({
+        icon: 'success', // 顯示成功圖示
+        title: '驗證信已寄出！', // 標題
+        // 使用 userStore.email 來獲取用戶的 Email
+        text: `我們已將驗證信寄送到 ${userStore.email}，請前往您的信箱查看。`, // 內容文字
+        confirmButtonText: '確定' // 確認按鈕文字
+    });
     step.value = '';
     router.push({ path: '/register-profile', query: { email } })
 }

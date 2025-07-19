@@ -1,10 +1,16 @@
 package tw.com.ispan.eeit.model.entity.store;
 
 import java.time.LocalDate;
+
+import java.time.LocalDate;
 import java.time.LocalTime;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -24,8 +30,7 @@ public class SpecialHoursBean {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private Integer id;
-	@Column(name = "store_id")
-	private Integer storeId;
+
 	// 修正：雖然資料庫是 datetime2(6)，但我們只需要日期部分
 	@Column(name = "date")
 	private LocalDate date;
@@ -35,4 +40,10 @@ public class SpecialHoursBean {
 	private LocalTime closeTime;
 	@Column(name = "is_close")
 	private Boolean isClose;
+
+	@ManyToOne
+	@JoinColumn(name = "store_id")
+	@JsonBackReference
+	private StoreBean store;
+
 }

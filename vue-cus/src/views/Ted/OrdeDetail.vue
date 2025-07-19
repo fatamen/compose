@@ -100,17 +100,20 @@ onMounted(() => {
               <h5 class="card-title fw-bold"  v-if="order.status !== 'completed' && order.status !== 'canceled'">最新訂購</h5>
               <h5 class="card-title fw-bold"  v-else>訂單記錄</h5>
               <p class="text-muted small">
-                {{ order.store?.name }}
-                <a href="#" class="text-decoration-none" style="color: #e20261;">訂單記錄</a> &gt; <a href="#" class="text-decoration-none" style="color: #e20261;">訂單詳情</a>
+                
+                <a href="#" class="text-decoration-none" style="color: #e20261;">歷史訂單</a> &gt; <a href="#" class="text-decoration-none" style="color: #e20261;">訂單詳情</a>
               </p>
 
               <div class="d-flex align-items-center mb-3">
                 <div class="me-3">
-                  <img :src="order.store?.photo" :alt="order.stor?.name" class="rounded-circle border" style="width: 70px; height: 70px; object-fit: cover;">
+                  <router-link :to="`/restaurant/${ order.store?.id }`">
+                    <img :src="order.store?.photo" :alt="order.stor?.name" class="rounded-circle border" style="width: 70px; height: 70px; object-fit: cover;">
+                  </router-link>
                 </div>
                 <div>
-                  <!-- <h5 class="mb-0 fw-bold">{{ order.store.name }}</h5> -->
-                  <!-- <p class="mb-0 text-muted small">外送於 {{ order.restaurant.address }}</p> -->
+                  
+                  <h5 class="mb-0 fw-bold">{{ order.store?.name }}</h5>
+                  <p class="mb-0 text-muted small">取餐於 {{ order.store?.address }}</p>
                   <!-- <p class="mb-0 text-muted small">{{ order.restaurant.orderId }}</p> -->
                 </div>
               </div>

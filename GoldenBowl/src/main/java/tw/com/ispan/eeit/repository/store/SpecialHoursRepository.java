@@ -13,11 +13,14 @@ import tw.com.ispan.eeit.model.entity.store.SpecialHoursBean;
 
 @Repository
 public interface SpecialHoursRepository extends JpaRepository<SpecialHoursBean, Integer> {
-
+	
         /**
          * 根據餐廳ID和日期查詢特殊營業時間
          */
-        @Query("SELECT sh FROM SpecialHoursBean sh WHERE sh.storeId = :storeId AND sh.date = :date")
+        @Query("SELECT sh FROM SpecialHoursBean sh "
+                        + "JOIN FETCH sh.store s "
+                        + "WHERE s.id = :storeId "
+                        + "AND sh.date = :date")
         Optional<SpecialHoursBean> findByStoreIdAndDate(@Param("storeId") Integer storeId,
                         @Param("date") LocalDate date);
 
@@ -29,7 +32,11 @@ public interface SpecialHoursRepository extends JpaRepository<SpecialHoursBean, 
         /**
          * 根據餐廳ID和日期範圍查詢特殊營業時間
          */
-        @Query("SELECT sh FROM SpecialHoursBean sh WHERE sh.storeId = :storeId AND sh.date BETWEEN :startDate AND :endDate ORDER BY sh.date")
+        @Query("SELECT sh FROM SpecialHoursBean sh "
+                        + "JOIN FETCH sh.store s "
+                        + "WHERE s.id = :storeId "
+                        + "AND sh.date BETWEEN :startDate AND :endDate "
+                        + "ORDER BY sh.date")
         List<SpecialHoursBean> findByStoreIdAndDateBetween(
                         @Param("storeId") Integer storeId,
                         @Param("startDate") LocalDate startDate,
@@ -42,7 +49,8 @@ public interface SpecialHoursRepository extends JpaRepository<SpecialHoursBean, 
          */
         @Query(value = """
                         SELECT sh.* FROM special_hours sh
-                        WHERE sh.store_id = :storeId
+                        JOIN FETCH sh.store s
+                        WHERE s.id = :storeId
                         AND sh.date = :date
                         AND sh.is_close = 0
                         AND sh.open_time IS NOT NULL
@@ -65,8 +73,9 @@ public interface SpecialHoursRepository extends JpaRepository<SpecialHoursBean, 
          */
         @Query(value = """
                         SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+                        JOIN FETCH sh.store s
                         FROM special_hours sh
-                        WHERE sh.store_id = :storeId
+                        WHERE s.id = :storeId
                         AND sh.date = :date
                         AND sh.is_close = 1
                         """, nativeQuery = true)
@@ -79,7 +88,8 @@ public interface SpecialHoursRepository extends JpaRepository<SpecialHoursBean, 
          */
         @Query(value = """
                         SELECT sh.* FROM special_hours sh
-                        WHERE sh.store_id = :storeId
+                        JOIN FETCH sh.store s
+                        WHERE s.id = :storeId
                         AND sh.date = :date
                         AND sh.is_close = 0
                         AND sh.open_time IS NOT NULL
@@ -104,7 +114,8 @@ public interface SpecialHoursRepository extends JpaRepository<SpecialHoursBean, 
         @Query(value = """
                         SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
                         FROM special_hours sh
-                        WHERE sh.store_id = :storeId
+                        JOIN FETCH sh.store s
+                        WHERE s.id = :storeId
                         AND sh.date = :date
                         AND sh.is_close = 0
                         AND sh.open_time IS NOT NULL
@@ -121,10 +132,4 @@ public interface SpecialHoursRepository extends JpaRepository<SpecialHoursBean, 
                         @Param("storeId") Integer storeId,
                         @Param("date") LocalDate date,
                         @Param("checkTime") java.time.LocalTime checkTime);
-
-        /**
-         * 查詢餐廳的特殊休假日列表
-         */
-        @Query(value = "SELECT sh.date FROM special_hours sh WHERE sh.store_id = :storeId AND sh.is_close = 1", nativeQuery = true)
-        List<LocalDate> findClosedDates(@Param("storeId") Integer storeId);
 }

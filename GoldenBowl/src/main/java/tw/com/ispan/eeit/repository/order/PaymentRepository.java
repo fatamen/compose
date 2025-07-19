@@ -5,8 +5,6 @@ import org.springframework.stereotype.Repository;
 
 import tw.com.ispan.eeit.model.entity.order.PaymentBean;
 
-
-
 @Repository
 public interface PaymentRepository extends JpaRepository<PaymentBean, Integer> {
 

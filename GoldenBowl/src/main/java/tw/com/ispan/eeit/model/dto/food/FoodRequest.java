@@ -29,6 +29,9 @@ public class FoodRequest {
     private Integer stock;
 
     private String imgResource;
+    
+ // 🔥 新增：供應狀態欄位
+    private Boolean isActive;
 
     // 接收食物所屬的分類 ID 列表
     // 一個食物可以屬於多個分類

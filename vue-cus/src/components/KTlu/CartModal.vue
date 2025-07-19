@@ -19,8 +19,10 @@
                         <!-- 餐廳標題 -->
                         <div class="restaurant-header">
                             <div class="restaurant-info">
+                                <router-link :to="`/restaurant/${ restaurantId }`">
                                 <img :src="restaurantCart.restaurant.image" :alt="restaurantCart.restaurant.name"
                                     class="restaurant-image" />
+                                </router-link>    
                                 <div class="restaurant-details">
                                     <h5 class="restaurant-name">{{ restaurantCart.restaurant.name }}</h5>
                                     <span class="restaurant-item-count">{{ restaurantCart.items.length }} 項商品</span>

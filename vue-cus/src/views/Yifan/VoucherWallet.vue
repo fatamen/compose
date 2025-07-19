@@ -7,11 +7,8 @@
     <!-- 📌 Tabs -->
     <ul class="nav nav-tabs justify-content-center mb-4 border-bottom-yellow">
       <li class="nav-item" v-for="tab in tabs" :key="tab.value">
-        <button
-          class="nav-link tab-btn px-4 py-2 mx-1"
-          :class="{ active: activeTab === tab.value }"
-          @click="activeTab = tab.value"
-        >
+        <button class="nav-link tab-btn px-4 py-2 mx-1" :class="{ active: activeTab === tab.value }"
+          @click="activeTab = tab.value">
           <i :class="tab.icon" class="me-2"></i>{{ tab.label }}
         </button>
       </li>
@@ -19,13 +16,8 @@
 
     <!-- 📌 列表區：直接顯示 promotionList -->
     <div v-if="promotionList.length > 0" class="d-flex flex-column gap-3">
-      <VoucherCard
-        v-for="promotion in promotionList"
-        :key="promotion.id"
-        :promotion="promotion"
-        :cartAmount="cartAmount"
-        @use="handleUse"
-      />
+      <VoucherCard v-for="promotion in promotionList" :key="promotion.id" :promotion="promotion"
+        :cartAmount="cartAmount" @use="handleUse" />
     </div>
     <div v-else class="text-muted text-center mt-5 fs-5">
       <i class="fas fa-ticket-alt me-2 text-warning"></i>
@@ -185,7 +177,8 @@ h2 {
 }
 
 .custom-width {
-  max-width: 1200px; /* 你可以自己調整為 700px 或 600px */
+  max-width: 1200px;
+  /* 你可以自己調整為 700px 或 600px */
   width: 100%;
 }
 
