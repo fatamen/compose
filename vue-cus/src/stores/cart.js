@@ -140,6 +140,52 @@ export const useCartStore = defineStore('cart', () => {
     }
 
 
+    // --- ✨ 新增：再訂購函式 ✨ ---
+    const reorder = (oldOrder) => {
+        if (!oldOrder || !oldOrder.store || !oldOrder.orderDetails || oldOrder.orderDetails.length === 0) {
+            console.warn('無效的舊訂單數據，無法再訂購。', oldOrder);
+            return;
+        }
+
+        // 確保 restaurant 物件的 key 與 addToCart 期望的一致
+        const restaurantToAddToCart = {
+            id: oldOrder.store.id,
+            name: oldOrder.store.name,
+            // 由於您的 oldOrder.store.photo 是圖片路徑，addToCart 期望 'image'
+            image: oldOrder.store.photo,
+            // 根據您的 addToCart 函數定義，可能需要添加其他 restaurant 屬性，
+            // 或確保 addToCart 能夠處理這些額外的屬性
+        };
+
+        // 遍歷舊訂單的每個商品，並添加到購物車
+        oldOrder.orderDetails.forEach(orderItem => {
+            // orderItem 是您的 orderDetails 陣列中的單個元素
+            // 它的結構是 { food: {id, name, image}, price, quantity, ... }
+            const itemToAddToCart = {
+                // Pinia Store 的 addToCart 期望的 item 參數的結構
+                // food: { id, name, image } 已經存在於 orderItem.food
+                food: {
+                    id: orderItem.food.id,
+                    name: orderItem.food.name,
+                    image: orderItem.food.image // 這裡使用的是 item.food.image
+                },
+                id: orderItem.food.id, // 用 food.id 作為購物車內商品的唯一ID
+                quantity: orderItem.quantity,
+                price: orderItem.price,
+                // 通常不傳 subTotal/total 給 addToCart，因為購物車會自行計算
+                // 但如果您的 addToCart 依賴這個，確保它符合期望
+                total: orderItem.price * orderItem.quantity // 計算單項總價
+            };
+
+            // 呼叫現有的 addToCart 函式
+            addToCart(itemToAddToCart, restaurantToAddToCart);
+        });
+
+        console.log('舊訂單已加入購物車:', oldOrder.id);
+        showCart(); // 確保再訂購後購物車彈窗顯示
+    };
+
+
 
     // 結帳相關方法
     const checkoutSingleRestaurant = (restaurantId) => {
@@ -206,7 +252,8 @@ export const useCartStore = defineStore('cart', () => {
 
         // 結帳方法
         checkoutSingleRestaurant,
-        checkoutAllRestaurants
+        checkoutAllRestaurants,
+        reorder // ✨ 新增：再訂購函式
     }
 }, {
     // ✨ 新增這個配置物件來啟用持久化

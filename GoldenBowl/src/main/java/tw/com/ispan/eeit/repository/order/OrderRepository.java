@@ -1,6 +1,7 @@
 package tw.com.ispan.eeit.repository.order;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +22,7 @@ public interface OrderRepository extends JpaRepository<OrderBean, Integer> {
             "LEFT JOIN FETCH od.likedFood lf " + // 使用 LEFT JOIN FETCH 以防沒有評論
             // 如果需要 likedFoods: "LEFT JOIN FETCH od.likedFoods lf " + // 注意：不能同時 JOIN FETCH 多個 OneToMany 集合
             "WHERE o.id = :orderId ")
-	List<OrderBean> findOrderById(@Param("orderId") Integer orderId);
+	Optional<OrderBean> findOrderById(@Param("orderId") Integer orderId);
 	
 	
 	
@@ -49,7 +50,6 @@ public interface OrderRepository extends JpaRepository<OrderBean, Integer> {
             "LEFT JOIN FETCH o.comment c " +
             "LEFT JOIN FETCH o.store s " +
             "LEFT JOIN FETCH od.likedFood lf " + // 使用 LEFT JOIN FETCH 以防沒有評論
-           
             "WHERE u.id = :userId "+ 
             "AND o.status = 'COMPLETED' OR  o.status = 'CANCELLED'")    
     List<OrderBean> findHistoryByUserId(@Param("userId") Integer userId);

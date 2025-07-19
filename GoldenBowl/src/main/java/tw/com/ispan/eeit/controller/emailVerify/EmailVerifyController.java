@@ -22,7 +22,6 @@
 // import tw.com.ispan.eeit.repository.emailVerify.UserTokenRepository;
 // import tw.com.ispan.eeit.service.UserService;
 
-// @CrossOrigin(origins = "http://localhost:5173")
 // @RestController
 // @RequestMapping("/api")
 // public class EmailVerifyController {
@@ -40,6 +39,7 @@
 // private UserService userService;
 
 // // 1. 寄送驗證信
+// @CrossOrigin(origins = "http://localhost:5173")
 // @PostMapping("/send-verify-email")
 // public ResponseEntity<String> sendVerifyEmail(@RequestParam String email) {
 // if (userRepository.findByEmail(email.trim()).isPresent()) {

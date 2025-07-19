@@ -534,8 +534,8 @@ onUnmounted(() => {
                                     <!-- 標籤 -->
                                 </div>
 
-                                <div class="item-image">
-                                    <img :src="item.imageResource || restaurant.image" :alt="item.name" />
+                                <div class="item-image">{{ item.imgResource }}
+                                    <img :src="item.imgResource" :alt="item.name" />
                                 </div>
                                 <div class="item-content">
                                     <div class="item-info">

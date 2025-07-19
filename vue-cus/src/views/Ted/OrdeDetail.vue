@@ -4,48 +4,83 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from '@/plungins/axios.js';
-
+import { useCartStore } from '@/stores/cart'; // 引入 Pinia 購物車 Store
 // 引入 Bootstrap 5 CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
+import Swal from 'sweetalert2';
 // 引入 Bootstrap 5 JS (可選，這裡主要用於佈局，JS 功能如彈窗等可能需要完整引入)
 // import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+// 獲取購物車 Store 實例
+const cartStore = useCartStore();
 
-const props =defineProps(['restaurantId'])
+
+
+// 重新訂購按鈕點擊事件
+const handleReorderClick = () => { // 將名稱從 reorder 改為 handleReorderClick，避免與 store 的 reorder 混淆
+  console.log('重新訂購按鈕被點擊');
+    if (order.value && order.value.orderDetails && order.value.orderDetails.length > 0) {
+         // 呼叫購物車 Store 的 reorder 函式，並傳入當前訂單數據
+        Swal.fire(
+                '已加入購物車！', // 標題
+                `${order.value.store.name} 的訂單已加入您的購物車。`, // 內文
+                'success' // 圖標：success, error, warning, info, question
+            ).then(() => {
+              cartStore.reorder(order.value);
+            })
+            ; // 給用戶一個提示
+    } else {
+         Swal.fire({
+            icon: 'warning', // 使用警告圖標
+            title: '無法重新訂購',
+            text: '該訂單沒有有效的店家或商品信息，無法加入購物車。',
+            confirmButtonText: '確定'
+        });
+    }
+};
+
 
 const route = useRoute();
 // 訂單數據
 const order = ref({});
 
 // 計算總計
-const total = computed(() => {
-  return order.value.subtotal + order.value.deliveryFee + order.value.platformFee;
-});
 
-// 重新訂購按鈕點擊事件
-const reorder = () => {
-  alert('您點擊了「重新訂購最新訂購項目」！');
-  // 這裡可以加入重新訂購的邏輯
+
+
+const findOrderById = (id) => {
+  axios.get(`/api/orders/${id}`)
+    .then((res) => {
+      if (res.status === 200 && res.data) {
+        order.value = res.data;
+        console.log('訂單內容載入成功:', order.value);
+      } else {
+        // 理論上，如果後端嚴格返回 404，這裡不會被觸發
+        // 但以防萬一，處理非 200 但成功的響應（例如後端返回 200 空響應）
+        console.log('訂單載入但無內容或狀態非 200:', res.status);
+        order.value = {}; // 設置為空物件，避免 TypeError
+      }
+    })
+    .catch((err) => {
+      console.error('獲取訂單詳情錯誤:', err);
+      // --- 關鍵修復：在錯誤發生時，明確處理 order 的狀態 ---
+      if (err.response && err.response.status === 404) {
+        console.log('訂單不存在 (404 Not Found)');
+        order.value = {}; // 設置為空物件，表示沒有找到訂單
+        // 你也可以在此處設置一個錯誤訊息，顯示在模板中
+        // errorMessage.value = '您要查詢的訂單不存在。';
+      } else {
+        console.log('其他錯誤發生，無法載入訂單。');
+        order.value = {}; // 設置為空物件，避免渲染錯誤
+        // errorMessage.value = '載入訂單時發生未知錯誤。';
+      }
+    });
 };
-
-// 需要協助按鈕點擊事件
-const needHelp = () => {
-  alert('您點擊了「與我們協助」！');
-  // 這裡可以加入尋求協助的邏輯
-};
-
-const findOrderById = (id)=>{
-  axios.get(`/api/orders/${id}`).then((res)=>{
-    console.log(res)
-    order.value =res.data
-    console.log('order內容',order.value)
-  })
-}
 
 onMounted(() => {
   // 在組件掛載後執行的邏輯
-  console.log('取得id',props.restaurantId   )
+  // console.log('取得id',props.restaurantId   )
   console.log('取得id2',route.params.id   )
-  findOrderById(props.restaurantId)
+  findOrderById(route.params.id)
 })
 
 </script>
@@ -60,18 +95,18 @@ onMounted(() => {
         <!-- 左側內容區 -->
          <h2 class="mb-4 fw-bold">訂單詳情</h2>
         <div class="col-lg-8">
-          
-
           <div class="card shadow-sm mb-4 rounded-lg">
             <div class="card-body">
-              <h5 class="card-title fw-bold">訂單記錄 & 最新訂購</h5>
+              <h5 class="card-title fw-bold"  v-if="order.status !== 'completed' && order.status !== 'canceled'">最新訂購</h5>
+              <h5 class="card-title fw-bold"  v-else>訂單記錄</h5>
               <p class="text-muted small">
+                {{ order.store?.name }}
                 <a href="#" class="text-decoration-none" style="color: #e20261;">訂單記錄</a> &gt; <a href="#" class="text-decoration-none" style="color: #e20261;">訂單詳情</a>
               </p>
 
               <div class="d-flex align-items-center mb-3">
                 <div class="me-3">
-                  <img src="" alt="餐廳圖標" class="rounded-circle border" style="width: 70px; height: 70px; object-fit: cover;">
+                  <img :src="order.store?.photo" :alt="order.stor?.name" class="rounded-circle border" style="width: 70px; height: 70px; object-fit: cover;">
                 </div>
                 <div>
                   <!-- <h5 class="mb-0 fw-bold">{{ order.store.name }}</h5> -->
@@ -95,13 +130,14 @@ onMounted(() => {
               <h5 class="card-title fw-bold">訂單</h5>
               <div v-for="(item, index) in order.orderDetails" :key="index" class="d-flex align-items-center mb-3 pb-3 border-bottom">
                 <div class="me-3">
-                  <img :src="item.imageUrl" :alt="item.name" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                  <img :src="item.food.image" :alt="item.food.name" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
                 </div>
                 <div class="flex-grow-1">
-                  <p class="mb-0 fw-bold">{{ item.name }}</p>
+                  <p class="mb-0 fw-bold">{{ item.food.name }}</p>
                   <!-- <p class="mb-0 text-muted small">{{ item.description }}</p> -->
                 </div>
-                <span class="fw-bold text-end">NT$ {{ item.price.toFixed(0) }}</span>
+                <span class="fw-bold text-end">{{ item.quantity }}&nbsp;x&nbsp;</span>
+                <span class="fw-bold text-end">&nbsp;NT$ {{ item.price }}</span>
               </div>
 
     
@@ -131,7 +167,7 @@ onMounted(() => {
           <div class="card shadow-sm mb-4 rounded-lg">
             <div class="card-body">
               <h5 class="card-title fw-bold">再次訂購</h5>
-              <button @click="reorder" class="btn btn-block btn-lg mt-3 w-100 fw-bold rounded" style="background-color: #e20261; color: white;">
+              <button @click="handleReorderClick" class="btn btn-block btn-lg mt-3 w-100 fw-bold rounded" style="background-color: #e20261; color: white;">
                 重新訂購最新訂購項目
               </button>
             </div>

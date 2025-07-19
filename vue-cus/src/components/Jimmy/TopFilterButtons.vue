@@ -17,8 +17,8 @@
       </button>
       <button
         v-else-if="isSupper"
-        @click="toggleSearchKeyword('宵夜')"
-        :class="{ 'filter-button': true, 'active': activeKeywords.includes('宵夜') }"
+        @click="toggleSearchKeyword('消夜')"
+        :class="{ 'filter-button': true, 'active': activeKeywords.includes('消夜') }"
       >
         宵夜推薦
       </button>
@@ -28,14 +28,14 @@
         @click="toggleSearchKeyword('熱')"
         :class="{ 'filter-button': true, 'active': activeKeywords.includes('熱') }"
       >
-        天寒地凍？來點熱飲吧！
+      {{ locationStore.temperature }}°C 天寒地凍？來點熱飲吧！
       </button>
       <button
         v-else-if="isHot"
         @click="toggleSearchKeyword('冰')"
         :class="{ 'filter-button': true, 'active': activeKeywords.includes('冰') }"
       >
-        日頭炎炎？來點冰品吧！
+      {{ locationStore.temperature }}°C 日頭炎炎？來點冰品吧！
       </button>
 
       <button v-for="item in randomKeywords" :key="item.searchKeyword" @click="toggleSearchKeyword(item.searchKeyword)" 
@@ -58,6 +58,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useLocationStore } from '@/stores/location';
+import { DateTime } from 'luxon'; // 引入 luxon
 
 const locationStore = useLocationStore();
 
@@ -72,20 +73,29 @@ const emit = defineEmits(['update:modelValue', 'search-keyword']);
 
 const temperature = computed(() => locationStore.temperature);
 
+// 根據當地時區判斷是否為早上
 const isMorning = computed(() => {
-  const hour = new Date().getHours();
+  if (!locationStore.timeZone) return false; // 如果沒有時區資訊，則不顯示
+  const now = DateTime.now().setZone(locationStore.timeZone);
+  const hour = now.hour;
   // 早餐時間設定為早上 5 點到 10 點前
   return hour >= 5 && hour < 10;
 });
 
+// 根據當地時區判斷是否為早午餐時段
 const isBrunch = computed(() => {
-  const hour = new Date().getHours();
+  if (!locationStore.timeZone) return false;
+  const now = DateTime.now().setZone(locationStore.timeZone);
+  const hour = now.hour;
   // 早午餐時間設定為早上 10 點到下午 2 點前 (14 點)
   return hour >= 10 && hour < 14;
 });
 
+// 根據當地時區判斷是否為宵夜時段
 const isSupper = computed(() => {
-  const hour = new Date().getHours();
+  if (!locationStore.timeZone) return false;
+  const now = DateTime.now().setZone(locationStore.timeZone);
+  const hour = now.hour;
   // 宵夜時間設定為晚上 10 點到凌晨 4 點前
   return hour >= 22 || hour < 4;
 });
@@ -146,18 +156,21 @@ const selectRandomKeywords = () => {
 
 onMounted(() => {
   // 獲取溫度資訊 (這部分仍保留，因為按鈕需要溫度判斷)
-  if (locationStore.coordinates && locationStore.coordinates.lat && locationStore.coordinates.lon && locationStore.temperature === null) {
-    locationStore.getTemperature(locationStore.coordinates.lat, locationStore.coordinates.lon);
-  }
+  // if (locationStore.coordinates && locationStore.coordinates.lat && locationStore.coordinates.lon && locationStore.temperature === null) {
+  //   locationStore.getTemperature(locationStore.coordinates.lat, locationStore.coordinates.lon);
+  // }
   // 頁面載入時選擇隨機關鍵字
   selectRandomKeywords();
 });
 
 watch(() => locationStore.coordinates, (newCoords) => {
-  if (newCoords && newCoords.lat && newCoords.lon && locationStore.temperature === null) {
-    locationStore.getTemperature(newCoords.lat, newCoords.lon);
-  }
-}, { deep: true });
+    if (newCoords && newCoords.lat && newCoords.lon) {
+        // 當座標更新時，觸發 store 內部的 getTemperature 和 getTimeZone 邏輯
+        // 這些方法會更新 temperature.value 和 timeZone.value，並觸發它們的 watch 儲存到 localStorage
+        locationStore.getTemperature(newCoords.lat, newCoords.lon);
+        locationStore.getTimeZone(newCoords.lat, newCoords.lon);
+    }
+}, { deep: true }); // 保持 deep: true 如果 coordinates 物件本身內部屬性可能會變
 </script>
 
 <style scoped>

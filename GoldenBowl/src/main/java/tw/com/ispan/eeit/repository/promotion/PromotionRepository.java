@@ -21,25 +21,34 @@ public interface PromotionRepository extends JpaRepository<PromotionBean, Intege
     List<PromotionBean> findByStoreId(Integer storeId);
 
     @Query("""
-        SELECT p
-        FROM PromotionBean p
-        WHERE p.status = 'active'
-          AND CURRENT_TIMESTAMP BETWEEN p.startTime AND p.endTime
-          AND p.minSpend <= :amount
-          AND (p.store IS NULL OR p.store.id = :storeId)
-          AND (
-            p.plan IS NULL OR EXISTS (
-              SELECT 1 FROM SubRecordBean sr
-              WHERE sr.user.id = :userId
-                AND sr.plan = p.plan
-                AND CURRENT_TIMESTAMP BETWEEN sr.startTime AND sr.endTime
-            )
-          )
-    """)
-    List<PromotionBean> findAvailablePromotions(
-        @Param("userId") Integer userId,
-        @Param("storeId") Integer storeId,
-        @Param("amount") Integer amount
-    );
+    	    SELECT p
+    	    FROM PromotionBean p
+    	    WHERE p.status = 'open'
+    	      AND CURRENT_TIMESTAMP BETWEEN p.startTime AND p.endTime
+    	      AND (
+    	            (p.tag IS NULL AND p.minSpend <= :amount)
+    	         OR (p.tag IS NOT NULL AND p.tag.id IN :tagIds)
+    	      )
+    	      AND (p.store IS NULL OR p.store.id = :storeId)
+    	      AND (
+    	        p.plan IS NULL OR EXISTS (
+    	          SELECT 1 FROM SubRecordBean sr
+    	          WHERE sr.user.id = :userId
+    	            AND sr.plan = p.plan
+    	            AND CURRENT_TIMESTAMP BETWEEN sr.startTime AND sr.endTime
+    	        )
+    	      )
+    	""")
+    	List<PromotionBean> findAvailablePromotions(
+    	    @Param("userId") Integer userId,
+    	    @Param("storeId") Integer storeId,
+    	    @Param("amount") Integer amount,
+    	    @Param("tagIds") List<Integer> tagIds
+    	);
+
+
+    @Query("SELECT DISTINCT o.promotion FROM OrderBean o WHERE o.user.id = :userId AND o.promotion IS NOT NULL")
+    List<PromotionBean> findUsedByUserId(@Param("userId") Integer userId);
+
 }
 

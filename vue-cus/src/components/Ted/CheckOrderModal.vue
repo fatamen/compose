@@ -64,6 +64,36 @@
               <span class="fw-bold">NT$ {{ subtotal }}</span>
             </div> -->
 
+             <!-- 優惠券選擇按鈕 -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <label class="fw-bold mb-0">優惠券</label>
+              <button
+                class="btn btn-sm btn-outline-warning"
+                @click="openCouponModal"
+              >
+                選擇優惠券
+              </button>
+            </div>
+            <div v-if="selectedCoupon" class="d-flex justify-content-between align-items-center mt-2">
+              <div class="fw-bold" style="color: #5f3300;">
+                已選擇：{{ selectedCoupon.title }}
+              </div>
+              <div class="fw-bold" style="color: #5f3300;">
+                折抵：-NT$ {{ subtotal - totalPayment }}
+              </div>
+            </div>
+            <CouponSelectorModal
+              v-model:show="showCouponModal"
+              :promotions="promotionList"
+              :cartAmount="subtotal"
+              @selected="handleCouponSelected"
+            />
+            
+            <!-- selected 是事件名稱 由CouponSelectorModal命名  -->
+            <!-- 處理selected 事件的函數是 handleCouponSelected -->
+            <!--handleCouponSelected 是由CheckOrderModal.vue命名 -->
+            <!-- ！！物件事件處理函數的口訣務必記住！！  -->
+
             <div class="d-flex justify-content-between align-items-center mt-3 py-3 border-bottom">
               <h5 class="mb-0">總付款金額</h5>
               <h5 class="mb-0 text-primary">NT$ {{ totalPayment }}</h5>
@@ -103,6 +133,132 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
 import Swal from 'sweetalert2';
 
+// 引入優惠券圖片
+import axios from '@/plungins/axios.js'
+import CouponSelectorModal from '@/components/Yifan/CouponSelectorModal.vue'//優惠券視窗
+
+import globalImg from '@/assets/vouchers/global.png'
+import restaurantImg from '@/assets/vouchers/restaurant.png'
+import foodImg from '@/assets/vouchers/food.png'
+import memberImg from '@/assets/vouchers/member.png'
+
+const showCouponModal = ref(false)
+const selectedCoupon = ref(null)
+const promotionList = ref([])
+
+
+// 統計 tag 消費金額（如果優惠券有綁定 tag_id，則應該用「該 tag 餐點的總金額」去比對 minSpend）
+const tagSpendMap = computed(() => {
+  const map = new Map();
+
+  internalOrderItems.value.forEach(item => {
+    //先判斷item.tags是否存在
+    if (Array.isArray(item.tags)) {
+      //計算總金額
+      const total = item.price * item.quantity;
+      item.tags.forEach(tag => {
+        //這食物有多個 tag，所以需要判斷map中是否存在該tag，如果存在則累加，不存在則新增
+        map.set(tag.id, (map.get(tag.id) || 0) + total);
+      });
+    }
+  });
+
+  const result = Object.fromEntries(map); // Map → Object
+  console.log('✅ 轉換後 tagSpendMap:', result);
+  return result;
+});
+
+
+const loadCoupons = async () => {
+  document.querySelector('#app')?.removeAttribute('aria-hidden');
+  console.log("🧩 props.orderItems:", props.orderItems);
+  // ✅ 強制同步 props.orderItems → internalOrderItems（保險起見）
+  internalOrderItems.value = JSON.parse(JSON.stringify(props.orderItems));
+  console.log('🧾 internalOrderItems', internalOrderItems.value);
+
+  try {
+    // ✅ 這裡從 localStorage 抓登入的 userId
+    const userId = parseInt(localStorage.getItem('userId')) || null;
+
+    if (!userId) {
+      console.warn('⚠️ 尚未登入，無法查詢優惠券');
+      return;
+    }
+
+    // ✅ Console 確認傳送內容
+    console.log('🧾 internalOrderItems:', internalOrderItems.value);
+    console.log('🔖 tagIds:', tagIds.value);
+    console.log('💰 tagSpendMap:', tagSpendMap.value);
+    console.log('📦 amount (subtotal):', subtotal.value);
+    console.log('🚀 傳送的優惠券查詢資料:', {
+      userId: userId,
+      storeId: props.restId,
+      amount: subtotal.value,
+      tagIds: tagIds.value,
+      tagSpendMap: JSON.stringify(tagSpendMap.value)
+    });
+
+    // ✅ 發送 POST 請求
+    const res = await axios.post('/promotions/available', {
+      userId: userId,
+      storeId: props.restId,
+      amount: subtotal.value,
+      tagIds: tagIds.value,
+      tagSpendMap: JSON.stringify(tagSpendMap.value)
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // ✅ 資料加工：分類與圖片設定
+    promotionList.value = res.data.map(item => {
+      let type = 'global';
+      let imageUrl = globalImg;
+
+      if (item.storeId) {
+        type = 'restaurant';
+        imageUrl = restaurantImg;
+      }
+      if (item.tagName) {
+        type = 'food';
+        imageUrl = foodImg;
+      }
+      if (item.planId) {
+        type = 'member';
+        imageUrl = memberImg;
+      }
+
+      return {
+        ...item,
+        type,
+        imageUrl
+      };
+    });
+
+    console.log('✅ 載入優惠券成功，共', promotionList.value.length, '張');
+    showCouponModal.value = true;
+
+  } catch (error) {
+    console.error('❌ 載入優惠券失敗', error);
+  }
+};
+
+// ✅ 補上：用來接住從 modal 子元件選擇的優惠券
+const handleCouponSelected = (coupon) => {
+  // cpupon就是剛剛 emits('selected', promotion)傳過來的 promotion只是我們這邊改變名稱叫做coupon
+  selectedCoupon.value = coupon;
+  showCouponModal.value = false;
+  console.log('🎟️ 已選擇優惠券：', coupon.title);
+};
+
+
+const openCouponModal = () => {
+  document.querySelector('#app')?.removeAttribute('aria-hidden');
+  loadCoupons();
+};
+
+
 // 定義發射的事件
 const emits = defineEmits(['add-to-cart', 'close']);
 
@@ -122,7 +278,16 @@ const props = defineProps({
   }
 });
 
-  
+// 建立可修改的本地訂單項目
+const internalOrderItems = ref(JSON.parse(JSON.stringify(props.orderItems)));
+
+// 監聽父層 props，如果有變化就同步更新本地資料
+watch(() => props.orderItems, (newItems) => {
+  internalOrderItems.value = JSON.parse(JSON.stringify(newItems));
+}, { deep: true });
+
+
+
 // 模態框實例和 DOM 元素引用
 
 let bsModal = null;
@@ -190,7 +355,6 @@ function adjustTime(minutes) {
   currentTime.value = time.toTimeString().slice(0, 5);
 }
 
-const internalOrderItems = ref(JSON.parse(JSON.stringify(props.orderItems)));
 
 watch(() => props.orderItems, (newItems) => {
   internalOrderItems.value = JSON.parse(JSON.stringify(newItems));
@@ -200,7 +364,43 @@ const subtotal = computed(() => {
   return internalOrderItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 });
 
+
+const tagIds = computed(() => {
+  const allTags = new Set();
+  internalOrderItems.value.forEach(item => {
+    console.log("item",item)
+    if (Array.isArray(item.tags)) {
+      item.tags.forEach(tag => allTags.add(tag.id));
+    }
+  });
+  console.log("allTags",allTags)
+  return Array.from(allTags);
+});
+
+
+// 原本總金額的寫法
+// const totalPayment = computed(() => {
+//   return subtotal.value;
+// });
+
+// 改成有使用優惠券，計算後總金額的寫法
+
+
 const totalPayment = computed(() => {
+    if (!selectedCoupon.value) return subtotal.value;
+
+  const coupon = selectedCoupon.value;
+// 現金折抵優惠券
+  if (coupon.discountType === 'amount') {
+    return Math.max(0, subtotal.value - coupon.discountValue);
+  }
+// 打折優惠券
+  if (coupon.discountType === 'percent') {
+    const discountRate = coupon.discountValue / 10; // 例如 9 ➜ 0.9 
+    const discountAmount = subtotal.value * (1 - discountRate);
+  return Math.max(0, Math.floor(subtotal.value - discountAmount));
+  }
+
   return subtotal.value;
 });
 
@@ -234,11 +434,13 @@ const emitAddToCart = () => {
       status:'Pending',
       create_time:createTime ,
       method:paymentMethod.value,
-      pickup_time:createTime.slice(0, 11)+currentTime.value
+      pickup_time:createTime.slice(0, 11)+currentTime.value,
       // 設定取餐時間
+      promotionId: selectedCoupon.value?.id || null //  有選優惠券就放ID，沒選就 null
     }
     //增加備註、訂單狀態、付款方式、取餐時間
     emits('add-to-cart',props.restId,body);
+    console.log('🎟️ emit 出去的資料：', body);
     // 送出事件清空函數
     internalOrderItems.value = [];
     bsModal.hide();
