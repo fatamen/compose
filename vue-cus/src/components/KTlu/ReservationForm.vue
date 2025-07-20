@@ -369,7 +369,7 @@ const getSpecialRestTimeSlots = async (date) => {
         console.log('獲取特殊休息時段，日期:', dateString)
 
         // 調用後端 API 檢查特殊營業時間
-        const response = await fetch(`/api/stores/${props.restaurantId}/special/check/${dateString}`)
+        const response = await fetch(`/stores/${props.restaurantId}/special/check/${dateString}`)
 
         if (response.ok) {
             const data = await response.json()

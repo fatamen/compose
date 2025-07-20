@@ -27,7 +27,7 @@ export const checkStoreClosedDay = async (storeId, dayOfWeek) => {
     try {
         console.log('checkStoreClosedDay - 餐廳ID:', storeId, '星期:', dayOfWeek)
 
-        const response = await axios.get(`/api/stores/${storeId}/hours/closed/${dayOfWeek}`)
+        const response = await axios.get(`/stores/${storeId}/hours/closed/${dayOfWeek}`)
 
         console.log('checkStoreClosedDay - API 響應狀態:', response.status)
         console.log('checkStoreClosedDay - API 響應數據:', response.data)
@@ -49,7 +49,7 @@ export const checkStoreOpenStatus = async (storeId, date, time) => {
     try {
         console.log('checkStoreOpenStatus - 餐廳ID:', storeId, '日期:', date, '時間:', time)
 
-        const response = await axios.get(`/api/stores/${storeId}/hours/check/${date}`, {
+        const response = await axios.get(`/stores/${storeId}/hours/check/${date}`, {
             params: {
                 time
             }
