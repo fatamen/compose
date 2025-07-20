@@ -221,11 +221,11 @@ const submitReview = async () => {
         let commentResponse;
         if (existingCommentId.value) {
             // 更新現有評論
-            commentResponse = await axios.put(`/comment/${existingCommentId.value}`, commentData);
+            commentResponse = await axios.put(`/api/comment/${existingCommentId.value}`, commentData);
             alert('店家評論更新成功！');
         } else {
             // 創建新評論
-            commentResponse = await axios.post('/comment', commentData);
+            commentResponse = await axios.post('/api/comment', commentData);
             existingCommentId.value = commentResponse.data.id; // 保存新創建的評論 ID
             alert('店家評論提交成功！');
         }
@@ -267,16 +267,16 @@ const submitReview = async () => {
                 if (originalLikedFood && originalLikedFood.id) {
                     if (likedStatus === null) {
                         // 如果現在狀態是 null，表示取消點讚/倒讚，則刪除後端記錄
-                        await axios.delete(`/liked-food/${originalLikedFood.id}`);
+                        await axios.delete(`/api/liked-food/${originalLikedFood.id}`);
                         console.log(`食物 ${detail.food.name} 點讚記錄已刪除.`);
                     } else {
                         // 否則，更新現有記錄
-                        await axios.put(`/liked-food/${originalLikedFood.id}`, likedFoodData);
+                        await axios.put(`/api/liked-food/${originalLikedFood.id}`, likedFoodData);
                         console.log(`食物 ${detail.food.name} 點讚狀態更新成功.`);
                     }
                 } else if (likedStatus !== null) {
                     // 如果不存在 likedFood 記錄 (沒有 id)，且用戶選擇了點讚/倒讚 (非 null)，則創建新記錄
-                    await axios.post('/liked-food', likedFoodData);
+                    await axios.post('/api/liked-food', likedFoodData);
                     console.log(`食物 ${detail.food.name} 點讚記錄創建成功.`);
                 }
             } catch (error) {

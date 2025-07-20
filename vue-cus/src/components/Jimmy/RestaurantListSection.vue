@@ -108,7 +108,7 @@ const toggleFavorite = async (restaurant) => {
   try {
     let response;
     if (originalIsFavorited) {
-      response = await axios.delete(`/stores/${storeId}/favorite/${userId}`);
+      response = await axios.delete(`/api/stores/${storeId}/favorite/${userId}`);
       if (response.data.success) {
         // alert('已取消收藏！'); // 通常在樂觀更新後不再需要彈出提示
       } else {
@@ -122,7 +122,7 @@ const toggleFavorite = async (restaurant) => {
         return; // 終止函數執行
       }
     } else {
-      response = await axios.post(`/stores/${storeId}/favorite/${userId}`);
+      response = await axios.post(`/api/stores/${storeId}/favorite/${userId}`);
       if (response.data.success) {
         // alert('已成功收藏！'); // 通常在樂觀更新後不再需要彈出提示
       } else {

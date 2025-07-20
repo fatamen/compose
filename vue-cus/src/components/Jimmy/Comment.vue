@@ -119,7 +119,7 @@
   const fetchComments = async () => {
     loading.value = true;
     try {
-      const response = await axios.get(`/comment/store/${props.storeId}`);
+      const response = await axios.get(`/api/comment/store/${props.storeId}`);
       comments.value = Array.isArray(response.data) ? response.data : [];
   
       // 重要：這裡的 `comment.user` 和 `comment.user.name` 應該是後端 `CommentResponseDTO` 返回的 `userName`
