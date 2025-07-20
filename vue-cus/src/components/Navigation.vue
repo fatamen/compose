@@ -34,23 +34,50 @@
           <span>{{ restaurantDisplayStore.showAllRestaurants ? '已收藏' : '全部' }}</span>
         </a>
 
-        <!-- 優惠通知鈴鐺 -->
         <div class="nav-item" style="position: relative;">
-          <button class="btn position-relative" style="background: transparent; border: none;"
-            @click.stop="toggleNotification" title="優惠通知">
-            <i class="bi bi-bell-fill text-white"></i>
-            <span v-if="unreadCount > 0"
-              class="badge bg-danger text-white position-absolute top-0 start-100 translate-middle rounded-pill">
-              {{ unreadCount }}
-            </span>
-          </button>
-          <NotificationList :visible="isNotificationOpen" :notifications="notifications" @mark-as-read="markAsRead" />
+        <!-- 小鈴鐺按鈕 -->
+        <button class="btn position-relative" style="background: transparent; border: none;"
+          @click.stop="toggleNotification" title="優惠通知">
+          <i class="bi bi-bell-fill text-white"></i>
+          <!-- 🔴 紅色徽章 -->
+          <span v-if="unreadCount > 0"
+            class="badge bg-danger text-white position-absolute top-0 start-100 translate-middle rounded-pill">
+            {{ unreadCount }}
+          </span>
+        </button>
+
+        <!-- ✅ 優惠通知彈窗 -->
+        <div
+          v-if="isNotificationOpen"
+          class="notification-dropdown"
+          style="position: absolute; top: 100%; right: 0; z-index: 1050;"
+        >
+          <NotificationList
+            :notifications="notifications"
+            @mark-as-read="handleMarkAsRead"
+            @close-list="isNotificationOpen = false"
+            @mark-all-as-read="markAllNotificationsAsRead"
+          />
         </div>
 
-        <div class="nav-item">
+        <!-- ✅ 透明遮罩：點擊外部就會關閉彈窗 -->
+        <div
+          v-if="isNotificationOpen"
+          class="notification-overlay"
+          @click="isNotificationOpen = false"
+        ></div>
+      </div>
+
+        <div class="nav-item" style="position: relative;">
           <button class="btn position-relative" style="background: transparent; border: none;" @click="showCart"
             title="購物車">
             <i class="bi bi-cart4 text-white"></i>
+            <!-- 🛒 紅色徽章 -->
+            <span
+              v-if="cartCount > 0"
+              class="badge bg-danger text-white position-absolute top-0 start-100 translate-middle rounded-pill">
+              {{ cartCount }}
+            </span>
           </button>
         </div>
       </div>
@@ -63,7 +90,7 @@
     @update-quantity="updateQuantity" @remove-item="removeItem" @checkout-restaurant="handleCheckoutRestaurant"
     @clear-restaurant="clearRestaurant" />
   <!-- 預備結帳畫面  ted-->
-  <CheckOrderModal :isVisible="isCheckOrderVisible" :orderItems="currentCheckoutItems" :restId="Number(restId)"
+  <CheckOrderModal v-if="isCheckOrderVisible"  :orderItems="currentCheckoutItems" :restId="Number(restId)" 
     @add-to-cart="handleConfirmCheckout" @close="hideCheckOrderModal" />
 
   <section class="popout" v-if="showPopout">
@@ -157,12 +184,31 @@ const handleCheckoutRestaurant = (restaurantId) => {
     });
   }
 };
+
+
+
 const handleConfirmCheckout = (restaruantId, orderData) => {
   // 結帳送出訂單
-  if (!userId.value) {
-    // 開啟登入畫面
-    console.log('開啟登入畫面')
-
+if (!isLoggedIn.value) { // 使用 isLoggedIn Computed 屬性判斷登入狀態
+    Swal.fire({
+      icon: 'warning',
+      title: '您尚未登入',
+      text: '是否要登入以完成訂單？',
+      showCancelButton: true,
+      confirmButtonText: '登入',
+      cancelButtonText: '取消',
+      customClass: {
+        confirmButton: 'my-swal-confirm-button',
+        cancelButton: 'my-swal-cancel-button' // 可以為取消按鈕添加自定義 CSS 類別
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // 如果用戶點擊「登入」，則開啟登入畫面
+        openRegisterModal(); // 呼叫已有的開啟登入模態框的函式
+      }
+      // 如果用戶點擊「取消」或關閉彈窗，則不執行後續結帳邏輯
+    });
+    return; // 未登入且未選擇登入，終止結帳流程
   }
 
   //如果沒辦法取得userId.value暫時給值 4
@@ -177,7 +223,9 @@ const handleConfirmCheckout = (restaruantId, orderData) => {
   Object.assign(getRestaurantCart(restaruantId), orderData, body);
   isCheckOrderVisible.value = false;
 
-  const order =cartStore.checkoutSingleRestaurant(restaruantId)
+  const order = cartStore.checkoutSingleRestaurant(restaruantId)
+
+
   // 寫上ajax
   axios.post('/api/orders', order).then((response) => {
     // 請求成功的處理邏輯
@@ -292,7 +340,7 @@ const handleConfirmCheckout = (restaruantId, orderData) => {
 const hideCheckOrderModal = () => {
   isCheckOrderVisible.value = false;
   currentCheckoutItems.value = []; // 清空數據
-  restId.value ={};
+  restId.value = {};
 };
 
 
@@ -308,20 +356,91 @@ const toggleMenu = () => {
 //   console.log("目前頁面餐廳為是/餐點為否:" + isRestaurant.value);
 // };
 
-// 優惠通知邏輯 (保持不變)
+/// 優惠通知邏輯 (保持不變)
 const isNotificationOpen = ref(false)
 const toggleNotification = () => {
   isNotificationOpen.value = !isNotificationOpen.value;
+  if (isNotificationOpen.value) {
+    loadNotifications(); // 當打開通知列表時，重新載入通知以獲取最新狀態
+  }
 }
 
-const notifications = ref([
-  { id: 1, title: '🎁 全站85折限時優惠', date: '2025-06-30', is_read: false },
-  { id: 2, title: '🍔 餐點類優惠券即將到期', date: '2025-06-29', is_read: false },
-  { id: 3, title: '🎉 註冊送折扣券', date: '2025-06-28', is_read: true }
-])
+const notifications = ref([])
 
-const unreadCount = computed(() => notifications.value.filter(n => !n.is_read).length)
-const markAsRead = (item) => { item.is_read = true }
+// 計算未讀通知數量
+const unreadCount = computed(() => notifications.value.filter(n => !n.isRead).length) // 注意這裡的屬性名是 isRead，不是 is_read
+
+// 處理子組件發出的標記為已讀事件
+const handleMarkAsRead = async (notificationItem) => {
+  if (!notificationItem.isRead) {
+    try {
+      // 假設你的 API 端點是 /notifications/{id}/read
+      await axios.patch(`/notifications/${notificationItem.id}/read`);
+      // 成功後，更新前端的 notifications 陣列
+      const index = notifications.value.findIndex(n => n.id === notificationItem.id);
+      if (index !== -1) {
+        notifications.value[index].isRead = true;
+      }
+      // 因為 unreadCount 是 computed 屬性，它會自動更新
+    } catch (error) {
+      console.error('標記通知為已讀失敗', error);
+    }
+  }
+};
+
+// 標記所有通知為已讀
+const markAllNotificationsAsRead = async () => {
+  try {
+    // 假設你的 API 端點是 /notifications/mark-all-as-read
+    await axios.post('/notifications/mark-all-as-read', { userId: userId.value }); // 傳遞用戶ID
+    // 成功後，更新前端的 notifications 陣列，將所有通知標記為已讀
+    notifications.value.forEach(n => { n.isRead = true; });
+    // unreadCount 會自動更新為 0
+  } catch (error) {
+    console.error('標記所有通知為已讀失敗', error);
+  }
+};
+
+// 載入通知
+const loadNotifications = async () => {
+  // 確保 userId 有值才發送請求
+  if (!userId.value) {
+    console.warn('UserId is not available for loading notifications.');
+    return;
+  }
+  try {
+    console.log(`取得通知 API：/notifications/user/${userId.value}`);
+    // 假設你的 API 端點是 /notifications/user/{userId}
+    const res = await axios.get(`/notifications/user/${userId.value}`);
+    console.log('後端通知資料', res.data);
+    // 假設後端返回的數據結構是 { id, title, createdTime, promotion, isRead }
+    notifications.value = res.data.map(n => ({
+      ...n,
+      isRead: n.isRead // 確保屬性名是 isRead
+    }));
+  } catch (error) {
+    console.error('載入通知失敗', error);
+    notifications.value = []; // 載入失敗時清空通知
+  }
+};
+
+onMounted(() => {
+  if (userId.value) {
+    loadNotifications()
+  }
+})
+watch(userId, (newVal) => {
+  if (newVal) {
+    loadNotifications()
+  }
+})
+
+// 格式化日期時間
+const formatDate = (isoString) => {
+  if (!isoString) return ''
+  const date = new Date(isoString)
+  return date.toLocaleDateString('zh-TW') + ' ' + date.toLocaleTimeString('zh-TW')
+}
 
 // 搜尋地址 (使用 locationStore 的方法)
 const searchAddress = async () => {
@@ -349,10 +468,20 @@ const getCurrentLocationAndNavigate = async () => {
 
 // 點擊外部關閉下拉選單
 const handleClickOutside = (event) => {
-  if (!event.target.closest('.user-dropdown-container') && !event.target.closest('.notification-list')) {
-    showDropdown.value = false;
-    isNotificationOpen.value = false; // 同時關閉通知列表
-  }
+    // 檢查點擊是否在用戶下拉選單或通知列表的元素之外
+    const userDropdownContainer = document.querySelector('.user-dropdown-container');
+    const notificationButton = document.querySelector('.nav-item .btn'); // 通知鈴鐺按鈕
+    const notificationListElement = document.querySelector('.notification-list'); // 通知列表本身
+
+    const isClickInsideUserDropdown = userDropdownContainer && userDropdownContainer.contains(event.target);
+    const isClickInsideNotificationButton = notificationButton && notificationButton.contains(event.target);
+    const isClickInsideNotificationList = notificationListElement && notificationListElement.contains(event.target);
+
+    if (!isClickInsideUserDropdown) {
+        showDropdown.value = false;
+    }
+    // 只有當點擊不在通知按鈕或通知列表內部時才關閉通知列表
+    if (!isClickInsideNotificationButton && !isClickInsideNotificationList);
 };
 
 // --- Lifecycle Hooks ---
@@ -661,6 +790,16 @@ const openRegisterModal = () => {
   .mobile-only {
     display: none;
   }
+
+.notification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000; /* 要低於彈窗（1050） */
+  background: transparent;
+}
 
   .desktop-only {
     display: flex;

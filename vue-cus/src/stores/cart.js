@@ -1,5 +1,10 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import {
+    defineStore
+} from 'pinia'
+import {
+    ref,
+    computed
+} from 'vue'
 
 export const useCartStore = defineStore('cart', () => {
     // 購物車結構：{ restaurantId: { restaurant, items } }
@@ -53,7 +58,7 @@ export const useCartStore = defineStore('cart', () => {
                 restaurant: {
                     id: restaurant.id,
                     name: restaurant.name,
-                    image: restaurant.image,
+                    image: restaurant.photo,
                     status: '',
                     content: '',
                 },
@@ -152,7 +157,7 @@ export const useCartStore = defineStore('cart', () => {
             id: oldOrder.store.id,
             name: oldOrder.store.name,
             // 由於您的 oldOrder.store.photo 是圖片路徑，addToCart 期望 'image'
-            image: oldOrder.store.photo,
+            photo: oldOrder.store.photo,
             // 根據您的 addToCart 函數定義，可能需要添加其他 restaurant 屬性，
             // 或確保 addToCart 能夠處理這些額外的屬性
         };
@@ -167,7 +172,7 @@ export const useCartStore = defineStore('cart', () => {
                 food: {
                     id: orderItem.food.id,
                     name: orderItem.food.name,
-                    image: orderItem.food.image // 這裡使用的是 item.food.image
+                    imgResource: orderItem.food.image // 這裡使用的是 item.food.image
                 },
                 id: orderItem.food.id, // 用 food.id 作為購物車內商品的唯一ID
                 quantity: orderItem.quantity,
@@ -196,7 +201,7 @@ export const useCartStore = defineStore('cart', () => {
             store: restaurantCart.restaurant,
             // 餐廳資訊
             orderDetails: [...restaurantCart.items],
-            total: getRestaurantTotal(restaurantId),
+            total: restaurantCart.total ?? getRestaurantTotal(restaurantId),
             status: restaurantCart.status,
             createTime: restaurantCart.create_time,
             content: restaurantCart.content,

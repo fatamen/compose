@@ -19,21 +19,27 @@
         </h5>
 
         <!-- 使用按鈕 -->
+        <!-- 使用按鈕 -->
         <button
           class="btn btn-use"
           :disabled="promotion.min_spend > cartAmount || promotion.used"
           @click="$emit('use', promotion)"
         >
-          使用
+          {{ promotion.used ? '已使用' : '立即使用' }}
         </button>
       </div>
 
       <!-- 優惠券資訊 -->
-      <p class="mb-1 text-secondary">{{ getDiscountText(promotion) }}</p>
+      <!-- 折扣文字（預設文字次要色，可改自訂） -->
+      <p class="mb-1" style="color: #000;">{{ getDiscountText(promotion) }}</p>
+
+      <!-- 優惠內容（改為黑色文字） -->
+      <p class="mb-1" style="color: #000;">{{ promotion.description }}</p>
+
+      <!-- 有效期限（維持灰色） -->
       <p class="mb-1 text-muted">
         有效期限：{{ formatDate(promotion.startTime) }} ~ {{ formatDate(promotion.endTime) }}
       </p>
-      <small class="text-muted">{{ promotion.description }}</small>
     </div>
   </div>
 </template>

@@ -66,7 +66,14 @@ const fetchTimeSlots = async (date = null) => {
     loading.value = true;
     try {
         const timeSlotService = reservationService.getTimeSlotService();
-        const data = await timeSlotService.getTimeSlots(props.storeId, date);
+
+        // 修改：總是傳遞日期參數，確保調用 getTimeSlotsByDate API 來取得所有時段（包括非啟用的）
+        const targetDate = date || selectedDate.value || new Date().toISOString().split('T')[0];
+        console.log('載入時段資料，餐廳ID:', props.storeId, '日期:', targetDate);
+
+        const data = await timeSlotService.getTimeSlots(props.storeId, targetDate);
+        console.log('API 回應的時段資料:', data);
+
         timeSlots.value = data;
     } catch (error) {
         console.error('載入時段資料失敗:', error);
@@ -204,8 +211,10 @@ const generateTimeSlots = async () => {
     if (!days || isNaN(days)) return;
 
     try {
+        console.log('開始生成時段，天數:', days);
         const timeSlotService = reservationService.getTimeSlotService();
         await timeSlotService.generateTimeSlots(props.storeId, parseInt(days));
+        console.log('時段生成成功，重新載入資料');
         await fetchTimeSlots(selectedDate.value);
         alert(`成功生成${days}天的時段資料！`);
     } catch (error) {
@@ -217,12 +226,14 @@ const generateTimeSlots = async () => {
 // 切換時段啟用狀態
 const toggleTimeSlotStatus = async (timeSlot) => {
     try {
+        console.log('切換時段狀態:', timeSlot.id, '從', timeSlot.isActive, '到', !timeSlot.isActive);
         const timeSlotService = reservationService.getTimeSlotService();
         await timeSlotService.updateTimeSlot(
             props.storeId,
             timeSlot.id,
             { isActive: !timeSlot.isActive }
         );
+        console.log('狀態更新成功，重新載入資料');
         await fetchTimeSlots(selectedDate.value);
     } catch (error) {
         console.error('切換時段狀態失敗:', error);
@@ -232,6 +243,7 @@ const toggleTimeSlotStatus = async (timeSlot) => {
 
 // 日期變更時重新載入資料
 const onDateChange = () => {
+    console.log('日期變更為:', selectedDate.value);
     fetchTimeSlots(selectedDate.value);
 };
 
@@ -276,7 +288,8 @@ const saveTimeSetting = async () => {
 // 頁面載入時取得資料
 onMounted(() => {
     selectedDate.value = new Date().toISOString().split('T')[0];
-    fetchTimeSlots();
+    console.log('組件載入，初始日期:', selectedDate.value);
+    fetchTimeSlots(selectedDate.value);
     loadTimeSetting();
 });
 </script>
@@ -285,17 +298,23 @@ onMounted(() => {
     <div class="time-slot-manager">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="mb-0">時段管理</h5>
-            <div class="d-flex gap-2">
-                <input type="date" class="form-control" v-model="selectedDate" @change="onDateChange">
-                <button class="btn btn-primary" @click="openAddModal">
-                    <i class="fas fa-plus me-1"></i> 新增時段
-                </button>
-                <button class="btn btn-outline-secondary" @click="generateTimeSlots">
-                    <i class="fas fa-magic me-1"></i> 生成時段
-                </button>
-                <button class="btn btn-outline-info" @click="showTimeSettingModal = true">
-                    <i class="fas fa-cog me-1"></i> 時段設定
-                </button>
+            <div class="d-flex gap-3 align-items-center">
+                <!-- <div class="d-flex align-items-center gap-2">
+                    <label class="form-label mb-0 me-2">選擇日期：</label>
+                    <input type="date" class="form-control" v-model="selectedDate" @change="onDateChange"
+                        style="width: auto;">
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" @click="openAddModal">
+                        <i class="fas fa-plus me-2"></i> 新增時段
+                    </button>
+                    <button class="btn btn-outline-secondary" @click="generateTimeSlots">
+                        <i class="fas fa-magic me-2"></i> 生成時段
+                    </button>
+                    <button class="btn btn-outline-info" @click="showTimeSettingModal = true">
+                        <i class="fas fa-cog me-2"></i> 時段設定
+                    </button>
+                </div> -->
             </div>
         </div>
 
@@ -315,18 +334,21 @@ onMounted(() => {
         <div v-else>
             <!-- 日期選擇器 -->
             <div class="date-selector mb-4">
-                <div class="row">
+                <div class="row align-items-end">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold">選擇日期</label>
+                        <label class="form-label fw-bold mb-2">選擇日期</label>
                         <input type="date" class="form-control" v-model="selectedDate" @change="onDateChange">
                     </div>
-                    <div class="col-md-8 d-flex align-items-end">
-                        <div class="d-flex gap-2">
+                    <div class="col-md-8">
+                        <div class="d-flex gap-3">
                             <button class="btn btn-primary" @click="openAddModal">
-                                <i class="fas fa-plus me-1"></i> 新增時段
+                                <i class="fas fa-plus me-2"></i> 新增時段
                             </button>
                             <button class="btn btn-outline-secondary" @click="generateTimeSlots">
-                                <i class="fas fa-magic me-1"></i> 生成時段
+                                <i class="fas fa-magic me-2"></i> 生成時段
+                            </button>
+                            <button class="btn btn-outline-info" @click="showTimeSettingModal = true">
+                                <i class="fas fa-cog me-2"></i> 時段設定
                             </button>
                         </div>
                     </div>
@@ -657,6 +679,15 @@ onMounted(() => {
     .time-slots-vertical-scroll {
         max-height: 400px;
     }
+
+    .d-flex.gap-3 {
+        gap: 0.5rem !important;
+    }
+
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+    }
 }
 
 @media (max-width: 576px) {
@@ -666,6 +697,19 @@ onMounted(() => {
 
     .date-selector {
         padding: 1rem;
+    }
+
+    .d-flex.gap-3 {
+        gap: 0.25rem !important;
+    }
+
+    .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn i {
+        margin-right: 0.25rem !important;
     }
 }
 </style>

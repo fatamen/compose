@@ -2,7 +2,6 @@
     <h2>評價檢舉審核</h2>
     <div class="container mt-4">
 
-        <!-- 書籤 Tabs -->
         <div class="bookmark-tabs mb-4">
             <button
                 v-for="tab in tabs"
@@ -18,7 +17,6 @@
             <div class="bookmark-underline"></div>
         </div>
 
-        <!-- 搜尋與篩選 -->
         <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
             <div>搜尋：</div>
             <input v-model="keyword" placeholder="檢舉人ID..." class="form-control w-auto" style="min-width:160px;" />
@@ -27,20 +25,22 @@
             <button class="btn btn-primary ms-2" @click="resetFilters">清除篩選</button>
         </div>
 
-        <!-- 全選 -->
         <div class="mb-2">
             <input type="checkbox" :checked="isAllSelected" @change="toggleAll" />
             全選
         </div>
 
-        <!-- 表格 -->
         <table class="table table-striped table-hover review-table">
             <thead>
                 <tr>
                     <th></th>
-                    <th>評價ID</th>
+                    <th>檢舉ID</th>
+                    <th>評價ID (評論ID)</th>
                     <th>檢舉人ID</th>
+                    <th>提交身分</th>
                     <th>審核狀態</th>
+                    <th>檢舉類型</th>
+                    <th>評論內容</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -54,25 +54,37 @@
                     <td @click.stop>
                         <input type="checkbox" v-model="selected" :value="review.id" />
                     </td>
-                    <td>{{ review.identity }}</td>
-                    <td>{{ review.name }}</td>
+                    <td>{{ review.id }}</td>
+                    <td>{{ review.commentId }}</td>
+                    <td>{{ review.submitterId }}</td>
+                    <td>{{ review.submitterType }}</td>
                     <td>
-                        {{ review.status }}
-                        <br v-if="review.detail" />
-                        <small v-if="review.detail">{{ review.detail }}</small>
+                        {{ getStatusText(review.status) }}
                     </td>
+                    <td>{{ review.reportTypeName }}</td>
+                    <td>{{ review.commentContent }}</td>
                     <td @click.stop>
-                        <span class="text-link me-3" @click="confirmReview(review.id)">確認</span>
-                        <span class="text-link text-danger" @click="rejectReview(review.id)">駁回</span>
+                        <template v-if="review.status.toLowerCase() === 'pending'">
+                            <span class="text-link me-3 text-success" @click="confirmReview(review)">確認</span>
+                            <span class="text-link text-danger" @click="rejectReview(review)">駁回</span>
+                        </template>
+                        <template v-else-if="review.status.toLowerCase() === 'rejected'">
+                            <span class="text-link text-success" @click="confirmReview(review)">確認</span>
+                        </template>
+                        <template v-else-if="review.status.toLowerCase() === 'approved'">
+                            <span class="text-link text-danger" @click="rejectReview(review)">駁回</span>
+                        </template>
+                        <template v-else>
+                            <span>無操作</span>
+                        </template>
                     </td>
                 </tr>
                 <tr v-if="pagedReviews.length === 0">
-                    <td colspan="6" class="text-center">查無資料</td>
+                    <td colspan="9" class="text-center">查無資料</td>
                 </tr>
             </tbody>
         </table>
 
-        <!-- 分頁控制 -->
         <div class="pagination d-flex justify-content-end align-items-center pagebar-wrap">
             <button class="btn btn-outline-secondary me-2" :disabled="page === 1" @click="page > 1 && (page--)">&lt; 上一頁</button>
             <nav>
@@ -90,17 +102,33 @@
             </div>
         </div>
 
-        <!-- 彈窗 -->
         <div v-if="modalReview" class="modal-mask" @click.self="closeModal">
             <div class="modal-dialog">
                 <h5>評價詳細資訊</h5>
                 <table class="table table-sm">
-                    <tr><th>評價ID</th><td>{{ modalReview.identity }}</td></tr>
-                    <tr><th>檢舉人ID</th><td>{{ modalReview.name }}</td></tr>
-                    <tr><th>狀態</th><td>{{ modalReview.status }}</td></tr>
-                    <tr v-if="modalReview.detail"><th>說明</th><td>{{ modalReview.detail }}</td></tr>
+                    <tr><th>檢舉ID</th><td>{{ modalReview.id }}</td></tr>
+                    <tr><th>評價ID (評論ID)</th><td>{{ modalReview.commentId }}</td></tr>
+                    <tr><th>檢舉人ID</th><td>{{ modalReview.submitterId }}</td></tr>
+                    <tr><th>提交身分</th><td>{{ modalReview.submitterType }}</td></tr>
+                    <tr><th>審核狀態</th><td>{{ getStatusText(modalReview.status) }}</td></tr>
+                    <tr><th>檢舉類型</th><td>{{ modalReview.reportTypeName }}</td></tr>
+                    <tr><th>評論內容</th><td>{{ modalReview.commentContent }}</td></tr>
+                    <tr><th>評論分數</th><td>{{ modalReview.commentScore }}</td></tr>
+                    <tr><th>評論隱藏狀態</th><td>{{ modalReview.commentIsHidden ? '已隱藏' : '未隱藏' }}</td></tr>
+                    <tr><th>檢舉時間</th><td>{{ formatDateTime(modalReview.reportDate) }}</td></tr>
                 </table>
                 <div class="text-end">
+                    <template v-if="modalReview.status.toLowerCase() === 'pending'">
+                        <button class="btn btn-success me-2" @click="confirmReview(modalReview)">確認為已審核</button>
+                        <button class="btn btn-danger me-2" @click="rejectReview(modalReview)">駁回為已駁回</button>
+                        <button class="btn btn-warning me-2" @click="resetToPending(modalReview)">重置為待審核</button>
+                    </template>
+                    <template v-else-if="modalReview.status.toLowerCase() === 'rejected'">
+                        <button class="btn btn-success me-2" @click="confirmReview(modalReview)">確認為已審核</button>
+                    </template>
+                    <template v-else-if="modalReview.status.toLowerCase() === 'approved'">
+                        <button class="btn btn-danger me-2" @click="rejectReview(modalReview)">駁回為已駁回</button>
+                    </template>
                     <button class="btn btn-secondary" @click="closeModal">關閉</button>
                 </div>
             </div>
@@ -109,23 +137,40 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import axios from '@/plungins/axios.js'; // 引入 axios
+import Swal from 'sweetalert2'; // <-- 新增: 引入 SweetAlert2
 
-// 假資料（正式請用API fetch）
-const reviews = ref([
-    { id: 1, identity: 'r001', name: 'user123', status: '待審核', detail: '內容有疑慮' },
-    { id: 2, identity: 'r002', name: 'user456', status: '已駁回', detail: '無違規' },
-    { id: 3, identity: 'r003', name: 'user789', status: '已審核', detail: '' }
-])
+// 原始數據
+const allReviews = ref([]); // 用於儲存從 API 獲取的所有檢舉資料
 
 // 書籤Tab
 const currentTab = ref('all')
-const filteredCounts = computed(() => ({
-    all: reviews.value.length,
-    approved: reviews.value.filter(w => w.status.includes('已') && !w.status.includes('駁回')).length,
-    pending: reviews.value.filter(w => w.status.includes('待')).length,
-    rejected: reviews.value.filter(w => w.status.includes('駁回')).length,
-}))
+const filteredCounts = computed(() => {
+    // *** 這裡修改：基於 allReviews.value 進行計算 ***
+    const data = allReviews.value;
+    return {
+        all: data.length,
+        approved: data.filter(r => r.status.toLowerCase() === 'approved').length, // 確保大小寫一致
+        pending: data.filter(r => r.status.toLowerCase() === 'pending').length,   // 確保大小寫一致
+        rejected: data.filter(r => r.status.toLowerCase() === 'rejected').length, // 確保大小寫一致
+    }
+})
+
+// 根據後端狀態碼轉換為前端顯示文本
+const getStatusText = (status) => {
+    switch (status) {
+        case 'pending':
+            return '待審核';
+        case 'approved':
+            return '已審核';
+        case 'rejected':
+            return '已駁回';
+        default:
+            return status;
+    }
+};
+
 const tabs = computed(() => [
     {
         key: 'all',
@@ -163,17 +208,28 @@ const setTab = (key) => {
 }
 
 // 篩選
-const keyword = ref('')
-const identityKeyword = ref('')
+const keyword = ref('') // 檢舉人ID (submitterId)
+const identityKeyword = ref('') // 評價ID (commentId)
+
+// 篩選 (這裡依然基於 currentTab 過濾)
 const filteredReviews = computed(() => {
-    let arr = reviews.value
-    if (currentTab.value === 'pending') arr = arr.filter(w => w.status.includes('待'))
-    else if (currentTab.value === 'approved') arr = arr.filter(w => w.status.includes('已') && !w.status.includes('駁回'))
-    else if (currentTab.value === 'rejected') arr = arr.filter(w => w.status.includes('駁回'))
-    if (keyword.value) arr = arr.filter(w => w.name.includes(keyword.value))
-    if (identityKeyword.value) arr = arr.filter(w => w.identity.includes(identityKeyword.value))
-    return arr
-})
+    let arr = allReviews.value;
+
+    // 根據 Tab 過濾狀態，這裡統一使用 .toLowerCase() 確保前後端狀態匹配
+    if (currentTab.value === 'pending') arr = arr.filter(r => r.status.toLowerCase() === 'pending');
+    else if (currentTab.value === 'approved') arr = arr.filter(r => r.status.toLowerCase() === 'approved');
+    else if (currentTab.value === 'rejected') arr = arr.filter(r => r.status.toLowerCase() === 'rejected');
+
+    // ... (搜尋關鍵字過濾邏輯不變)
+    if (keyword.value) {
+        arr = arr.filter(r => String(r.submitterId).includes(keyword.value));
+    }
+    if (identityKeyword.value) {
+        arr = arr.filter(r => String(r.commentId).includes(identityKeyword.value));
+    }
+    return arr;
+});
+
 
 // 分頁
 const page = ref(1)
@@ -193,7 +249,7 @@ const isAllSelected = computed(() =>
 )
 const toggleAll = () => {
     if (isAllSelected.value) selected.value = []
-    else selected.value = pagedReviews.value.map(review => review.id)
+    else selected.value = pagedReviews.value.map(review => review.id) // 這裡的 ID 是 ReportBean 的 id
 }
 watch([page, pageSize], () => { selected.value = [] })
 watch(pageSize, () => { page.value = 1 })
@@ -203,15 +259,139 @@ const modalReview = ref(null)
 const showDetail = (review) => { modalReview.value = { ...review } }
 const closeModal = () => { modalReview.value = null }
 
-// 操作
-const confirmReview = (id) => { alert(`確認 ID: ${id}`) }
-const rejectReview = (id) => { alert(`駁回 ID: ${id}`) }
+// 格式化日期時間顯示
+const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString(); // 根據用戶本地設置格式化日期時間
+};
+
+// --- 後端 API 互動 ---
+
+// 獲取所有檢舉資料
+const fetchReviews = async () => {
+    try {
+        const response = await axios.get('/api/reports');
+        // 直接使用從後端返回的 ReportResponseDTO 結構
+        allReviews.value = response.data;
+        console.log("檢舉資料已加載:", allReviews.value);
+    } catch (error) {
+        console.error("加載檢舉資料失敗:", error);
+        allReviews.value = [];
+    }
+};
+
+// 處理狀態更新的核心函數
+const updateReportAndCommentStatus = async (report, newReportStatus, newCommentIsHidden) => {
+    try {
+        // 1. 更新檢舉狀態
+        const updateReportData = { ...report, status: newReportStatus };
+        await axios.put(`/api/reports/${report.id}`, updateReportData);
+
+        // 2. 更新評論的 isHidden 狀態
+        // 這裡假設 CommentController 的 PUT 方法可以只接收部分字段來更新
+        const updateCommentData = {
+            isHidden: newCommentIsHidden
+        };
+        await axios.put(`/comment/${report.commentId}`, updateCommentData);
+
+        // 更新成功後重新加載數據，並關閉彈窗 (如果打開的話)
+        // 將 alert 替換為 Swal.fire
+        Swal.fire({ // <-- 修改：使用 SweetAlert2 顯示成功訊息
+            icon: 'success',
+            title: '操作成功',
+            text: `檢舉 #${report.id} 狀態已更新為 ${getStatusText(newReportStatus)}，相關評論隱藏狀態為 ${newCommentIsHidden ? '已隱藏' : '未隱藏'}。`,
+            confirmButtonText: '確定'
+        });
+        closeModal(); // 關閉彈窗
+        await fetchReviews(); // 更新後重新加載數據
+    } catch (error) {
+        console.error(`更新檢舉 #${report.id} 失敗:`, error);
+        // 將 alert 替換為 Swal.fire
+        Swal.fire({ // <-- 修改：使用 SweetAlert2 顯示錯誤訊息
+            icon: 'error',
+            title: '操作失敗',
+            text: `更新檢舉 #${report.id} 失敗！`,
+            confirmButtonText: '確定'
+        });
+    }
+};
+
+
+// 確認檢舉 (將檢舉狀態設為 'approved'，並隱藏評論)
+const confirmReview = async (report) => {
+    // 將 confirm 替換為 Swal.fire
+    Swal.fire({ // <-- 修改：使用 SweetAlert2 進行確認
+        title: '確認操作',
+        text: `確定要將檢舉 ID 為 ${report.id} 標記為「已審核」並隱藏相關評論嗎？`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await updateReportAndCommentStatus(report, 'approved', true);
+        }
+    });
+};
+
+// 駁回檢舉 (將檢舉狀態設為 'rejected'，並取消隱藏評論)
+const rejectReview = async (report) => {
+    // 將 confirm 替換為 Swal.fire
+    Swal.fire({ // <-- 修改：使用 SweetAlert2 進行確認
+        title: '確認操作',
+        text: `確定要將檢舉 ID 為 ${report.id} 標記為「已駁回」並取消隱藏相關評論嗎？`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await updateReportAndCommentStatus(report, 'rejected', false); // 駁回時評論設為不隱藏
+        }
+    });
+};
+
+// 新增：重置為待審核 (將檢舉狀態設為 'pending'，並取消隱藏評論)
+const resetToPending = async (report) => {
+    // 將 confirm 替換為 Swal.fire
+    Swal.fire({ // <-- 修改：使用 SweetAlert2 進行確認
+        title: '確認操作',
+        text: `確定要將檢舉 ID 為 ${report.id} 重置為「待審核」並取消隱藏相關評論嗎？`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '確定',
+        cancelButtonText: '取消'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            await updateReportAndCommentStatus(report, 'pending', false); // 重置為 pending 時評論設為不隱藏
+        }
+    });
+};
+
 
 // 清除篩選
 function resetFilters() {
     keyword.value = ''
     identityKeyword.value = ''
+    currentTab.value = 'all'; // 清除篩選時重置到全部tab
 }
+
+// 組件掛載時獲取資料
+onMounted(() => {
+    fetchReviews();
+});
+
+// Watch 相關數據變化，重新計算 filteredCounts
+watch(filteredReviews, () => {
+    // filteredCounts 已經是 computed，它會自動反應 filteredReviews 的變化
+}, { deep: true });
 </script>
 
 <style scoped>
@@ -295,5 +475,21 @@ function resetFilters() {
 /* 表格 hover 行效果 */
 .review-table tbody tr:hover {
     background: #f8f9fa !important;
+}
+
+/* 確保表格標題文字居中 */
+.review-table th {
+    text-align: center;
+}
+/* 確保表格內容文字居中 */
+.review-table td {
+    text-align: center;
+}
+.text-link {
+    cursor: pointer;
+    text-decoration: underline;
+}
+.text-link:hover {
+    text-decoration: none;
 }
 </style>

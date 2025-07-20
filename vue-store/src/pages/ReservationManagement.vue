@@ -5,6 +5,10 @@ import SlideOutPanel from '../components/common/SlideOutPanel.vue';
 import reservationService from '../services/reservationService.js';
 import ReservationDashboard from '../components/reservation/ReservationDashboard.vue';
 import TimeSlotManager from '../components/reservation/TimeSlotManager.vue';
+import { useStore } from '../composables/useStore.js';
+
+// 使用商店管理
+const { selectedStore, isLoggedIn } = useStore();
 
 // 響應式資料
 const reservations = ref([]);
@@ -15,66 +19,8 @@ const searchKeyword = ref('');
 const statusFilter = ref('all');
 const dateFilter = ref('');
 const currentView = ref('dashboard'); // dashboard, list, timeslots
-const storeId = ref(1); // 假設當前商家ID為1
 
-// 模擬訂位資料
-const mockReservations = [
-    {
-        id: 1,
-        customerName: '張小明',
-        phone: '0912-345-678',
-        date: '2024-01-15',
-        time: '18:30',
-        guests: 4,
-        status: 'PENDING',
-        content: '生日聚餐',
-        createdAt: '2024-01-10 14:30:00'
-    },
-    {
-        id: 2,
-        customerName: '李小華',
-        phone: '0923-456-789',
-        date: '2024-01-15',
-        time: '19:00',
-        guests: 2,
-        status: 'CONFIRMED',
-        content: '情侶約會',
-        createdAt: '2024-01-10 15:20:00'
-    },
-    {
-        id: 3,
-        customerName: '王大明',
-        phone: '0934-567-890',
-        date: '2024-01-16',
-        time: '12:00',
-        guests: 6,
-        status: 'CANCELLED',
-        content: '家庭聚餐',
-        createdAt: '2024-01-10 16:15:00'
-    },
-    {
-        id: 4,
-        customerName: '陳小美',
-        phone: '0945-678-901',
-        date: '2024-01-16',
-        time: '20:00',
-        guests: 3,
-        status: 'PENDING',
-        content: '朋友聚會',
-        createdAt: '2024-01-10 17:45:00'
-    },
-    {
-        id: 5,
-        customerName: '劉小強',
-        phone: '0956-789-012',
-        date: '2024-01-17',
-        time: '19:30',
-        guests: 5,
-        status: 'CONFIRMED',
-        content: '商務聚餐',
-        createdAt: '2024-01-10 18:30:00'
-    }
-];
+
 
 // 狀態選項
 const statusOptions = [
@@ -139,28 +85,43 @@ const getStatusClass = (status) => {
 const fetchReservations = async () => {
     loading.value = true;
     try {
-        // 使用真實API或模擬資料
-        const storeId = 1; // 假設當前商家ID為1
+        if (!selectedStore.value) {
+            console.error('未選擇商店');
+            reservations.value = [];
+            return;
+        }
+
         const filters = {
             status: statusFilter.value !== 'all' ? statusFilter.value : null,
             date: dateFilter.value || null,
             keyword: searchKeyword.value || null
         };
 
-        // 嘗試使用真實API，如果失敗則使用模擬資料
-        try {
-            const data = await reservationService.getStoreReservations(storeId, filters);
-            reservations.value = data;
-        } catch (apiError) {
-            console.warn('API呼叫失敗，使用模擬資料:', apiError);
-            // 模擬 API 呼叫延遲
-            await new Promise(resolve => setTimeout(resolve, 500));
-            reservations.value = mockReservations;
+        // 使用真實API
+        const data = await reservationService.getStoreReservations(selectedStore.value, filters);
+        console.log('API 返回的訂位資料:', data);
+
+        // 轉換資料格式以符合前端期望
+        if (data && Array.isArray(data)) {
+            reservations.value = data.map(item => ({
+                id: item.id,
+                customerName: item.userName || '未知顧客',
+                phone: item.userPhone || '未知電話',
+                date: item.reservedDate,
+                time: item.reservedTime,
+                guests: item.guests,
+                status: item.status,
+                content: item.content || '',
+                createdAt: item.createdAt
+            }));
+        } else {
+            reservations.value = [];
         }
     } catch (error) {
         console.error('載入訂位資料失敗:', error);
-        // 如果完全失敗，使用模擬資料
-        reservations.value = mockReservations;
+        // 不使用模擬資料，保持空陣列
+        reservations.value = [];
+        alert('載入訂位資料失敗，請檢查網路連線或稍後再試');
     } finally {
         loading.value = false;
     }
@@ -242,7 +203,12 @@ const clearFilters = () => {
 // 匯出訂位資料
 const exportReservations = async () => {
     try {
-        const storeId = 1; // 假設當前商家ID為1
+        if (!selectedStore.value) {
+            console.error('未選擇商店');
+            alert('請先選擇商店');
+            return;
+        }
+
         const filters = {
             status: statusFilter.value !== 'all' ? statusFilter.value : null,
             date: dateFilter.value || null,
@@ -251,7 +217,7 @@ const exportReservations = async () => {
 
         // 嘗試使用真實API匯出
         try {
-            const blob = await reservationService.exportReservations(storeId, filters);
+            const blob = await reservationService.exportReservations(selectedStore.value, filters);
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `訂位資料_${new Date().toISOString().split('T')[0]}.csv`;
@@ -324,7 +290,7 @@ onMounted(() => {
 
         <!-- 內容區域 -->
         <div v-if="currentView === 'dashboard'">
-            <ReservationDashboard :store-id="storeId"
+            <ReservationDashboard :store-id="selectedStore"
                 @view-pending="() => { currentView = 'list'; statusFilter = 'PENDING'; }"
                 @view-today="() => { currentView = 'list'; dateFilter = new Date().toISOString().split('T')[0]; }"
                 @view-upcoming="() => { currentView = 'list'; }" @export-data="exportReservations" />
@@ -416,10 +382,10 @@ onMounted(() => {
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary"
+                                        <!-- <button class="btn btn-outline-primary"
                                             @click="viewReservationDetail(reservation)" title="查看詳情">
                                             <i class="fas fa-eye"></i>
-                                        </button>
+                                        </button> -->
                                         <button v-if="reservation.status === 'PENDING'" class="btn btn-outline-success"
                                             @click="updateReservationStatus(reservation.id, 'CONFIRMED')" title="確認訂位">
                                             <i class="fas fa-check"></i>
@@ -431,10 +397,10 @@ onMounted(() => {
                                             @click="updateReservationStatus(reservation.id, 'CANCELLED')" title="取消訂位">
                                             <i class="fas fa-times"></i>
                                         </button>
-                                        <button class="btn btn-outline-danger"
+                                        <!-- <button class="btn btn-outline-danger"
                                             @click="deleteReservation(reservation.id)" title="刪除訂位">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                            <i class="fas fa-trash"></i> -->
+                                        <!-- </button> -->
                                     </div>
                                 </td>
                             </tr>
@@ -445,7 +411,7 @@ onMounted(() => {
         </div>
 
         <div v-else-if="currentView === 'timeslots'">
-            <TimeSlotManager :store-id="storeId" />
+            <TimeSlotManager :store-id="selectedStore" />
         </div>
 
         <!-- 訂位詳情側邊欄 -->
@@ -519,9 +485,11 @@ onMounted(() => {
                         class="btn btn-warning" @click="updateReservationStatus(selectedReservation.id, 'CANCELLED')">
                         <i class="fas fa-times me-1"></i> 取消訂位
                     </button>
-                    <button class="btn btn-danger" @click="deleteReservation(selectedReservation.id)">
+                    <!-- <button class="btn btn-danger" @click="deleteReservation(selectedReservation.id)">
                         <i class="fas fa-trash me-1"></i> 刪除訂位
-                    </button>
+                    </button> -->
+
+
                 </div>
             </div>
         </SlideOutPanel>

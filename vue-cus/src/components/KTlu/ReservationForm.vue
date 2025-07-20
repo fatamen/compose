@@ -18,6 +18,7 @@
 
                 <div class="date-hint">
                     <small class="hint-text">
+
                         <i class="pi pi-info-circle"></i>
                         僅顯示有時間段的可預約日期・可接受1-6位訂位（含大人與小孩）・超過6人請電話預約
                         <a href="tel:0227845677" class="phone-link">02-2784-5677</a>
@@ -36,7 +37,7 @@
             <div v-else-if="!date" class="empty-state">
                 請先選擇用餐日期
             </div>
-            <div v-else-if="isClosedDay(date)" class="empty-state">
+            <div v-else-if="isClosedDayStatus" class="empty-state">
                 <i class="pi pi-calendar-times"></i> 當日為公休日，暫不提供預約服務
             </div>
             <div v-else-if="!timeSections || timeSections.length === 0" class="empty-state">
@@ -117,7 +118,8 @@ const note = ref('')
 const selectedTime = ref('')
 const minDate = ref(new Date()) // 今日起始
 const maxDate = ref(null) // 時段資料最新日期
-const disabledDates = ref([]) // 禁用日期列表
+const staticDisabledDates = ref([]) // 靜態禁用日期列表（從API獲取）
+const dynamicDisabledDates = ref([]) // 動態禁用日期列表（計算得出）
 
 const selectedGuest = ref();
 const selectChild = ref();
@@ -141,7 +143,40 @@ const timeSlots = ref([])
 const bookedSlots = ref([])
 const storeHours = ref([])
 const loading = ref(false)
+const isClosedDayStatus = ref(false) // 追蹤休假日狀態
 
+// 計算禁用日期（合併靜態和動態）
+const disabledDates = computed(() => {
+    return [...staticDisabledDates.value, ...dynamicDisabledDates.value]
+})
+
+// 動態計算禁用日期
+const calculateDisabledDates = async () => {
+    const disabledDatesList = []
+
+    try {
+        // 獲取未來30天的日期範圍
+        const today = new Date()
+        const endDate = new Date()
+        endDate.setDate(today.getDate() + 30)
+
+        console.log('開始計算禁用日期，範圍:', today.toISOString().split('T')[0], '到', endDate.toISOString().split('T')[0])
+
+        // 檢查每一天是否為休假日
+        for (let currentDate = new Date(today); currentDate <= endDate; currentDate.setDate(currentDate.getDate() + 1)) {
+            const isClosed = await isAnyClosedDay(new Date(currentDate))
+            if (isClosed) {
+                disabledDatesList.push(new Date(currentDate))
+            }
+        }
+
+        dynamicDisabledDates.value = disabledDatesList
+        console.log('計算出的動態禁用日期:', disabledDatesList.map(d => d.toISOString().split('T')[0]))
+    } catch (error) {
+        console.error('計算禁用日期時發生錯誤:', error)
+        dynamicDisabledDates.value = []
+    }
+}
 
 
 // 分析時段數據中的日期
@@ -233,18 +268,18 @@ const fetchCalendarMetadata = async () => {
             console.log('📅 最大可選日期:', maxDate.value.toISOString().split('T')[0])
         }
 
-        // 設定禁用日期
+        // 設定靜態禁用日期
         if (data.disabledDates && Array.isArray(data.disabledDates)) {
-            disabledDates.value = data.disabledDates.map(dateStr => new Date(dateStr))
-            console.log('🚫 禁用日期數量:', disabledDates.value.length)
-            console.log('🚫 禁用日期:', data.disabledDates)
+            staticDisabledDates.value = data.disabledDates.map(dateStr => new Date(dateStr))
+            console.log('🚫 靜態禁用日期數量:', staticDisabledDates.value.length)
+            console.log('🚫 靜態禁用日期:', data.disabledDates)
         }
 
     } catch (error) {
         console.error('獲取日曆元數據失敗:', error)
         // 發生錯誤時使用預設值
         maxDate.value = new Date()
-        disabledDates.value = []
+        staticDisabledDates.value = []
     }
 }
 
@@ -281,6 +316,102 @@ const isClosedDay = (date) => {
         console.error('檢查公休日時發生錯誤:', error)
         return false
     }
+}
+
+// 檢查是否為特殊休假日
+const isSpecialClosedDay = async (date) => {
+    if (!date) {
+        return false
+    }
+
+    try {
+        const dateString = formatDateToString(date)
+        console.log('檢查特殊營業時間，日期:', dateString)
+
+        // 調用後端 API 檢查特殊營業時間
+        const response = await fetch(`/api/stores/${props.restaurantId}/special/check/${dateString}`)
+
+        if (response.ok) {
+            const data = await response.json()
+            console.log('特殊營業時間檢查結果:', data)
+
+            // 如果存在特殊營業時間設定
+            if (data.exists) {
+                // 如果 isClose 為 true，表示特殊休假日
+                if (data.isClose === true) {
+                    console.log('當日為特殊休假日:', dateString)
+                    return true
+                }
+
+                // 如果 opentime 和 closetime 都為 null，也表示公休
+                if (data.openTime === null && data.closeTime === null) {
+                    console.log('當日特殊營業時間為公休:', dateString)
+                    return true
+                }
+            }
+        }
+
+        return false
+    } catch (error) {
+        console.error('檢查特殊營業時間時發生錯誤:', error)
+        return false
+    }
+}
+
+// 獲取特殊營業時間的休息時段（需要禁用的時段）
+const getSpecialRestTimeSlots = async (date) => {
+    if (!date) {
+        return []
+    }
+
+    try {
+        const dateString = formatDateToString(date)
+        console.log('獲取特殊休息時段，日期:', dateString)
+
+        // 調用後端 API 檢查特殊營業時間
+        const response = await fetch(`/api/stores/${props.restaurantId}/special/check/${dateString}`)
+
+        if (response.ok) {
+            const data = await response.json()
+            console.log('特殊營業時間檢查結果:', data)
+
+            // 如果存在特殊營業時間設定且 isClose 為 false
+            if (data.exists && data.isClose === false && data.openTime && data.closeTime) {
+                console.log('發現特殊休息時段:', data.openTime, '到', data.closeTime)
+
+                // 返回需要禁用的時間段範圍
+                return {
+                    startTime: data.openTime,
+                    endTime: data.closeTime,
+                    reason: '特殊休息時段'
+                }
+            }
+        }
+
+        return null
+    } catch (error) {
+        console.error('獲取特殊休息時段時發生錯誤:', error)
+        return null
+    }
+}
+
+// 綜合檢查是否為休假日（一般公休日 + 特殊休假日）
+const isAnyClosedDay = async (date) => {
+    // 先檢查一般公休日
+    const isRegularClosed = isClosedDay(date)
+    if (isRegularClosed) {
+        console.log('當日為一般公休日')
+        return true
+    }
+
+    // 再檢查特殊休假日
+    const isSpecialClosed = await isSpecialClosedDay(date)
+    if (isSpecialClosed) {
+        console.log('當日為特殊休假日')
+        return true
+    }
+
+    return false
 }
 
 // 從後台抓取營業時間設定
@@ -334,6 +465,9 @@ const fetchTimeSlots = async (selectedDate = null) => {
 
         // 獲取已預訂的時間段
         await fetchBookedSlots(selectedDate)
+
+        // 更新時間段顯示（包含休假日檢查）
+        await updateTimeSections()
     } catch (error) {
         console.error('抓取時間段失敗:', error)
         timeSlots.value = []
@@ -379,27 +513,40 @@ const fetchBookedSlots = async (selectedDate = null) => {
 
 
 
-const timeSections = computed(() => {
+// 響應式時間段數據
+const timeSections = ref([])
+
+// 更新時間段顯示
+const updateTimeSections = async () => {
     if (!date.value || !timeSlots.value || timeSlots.value.length === 0) {
-        console.log('timeSections: 缺少必要數據', {
+        console.log('updateTimeSections: 缺少必要數據', {
             date: date.value,
             timeSlotsLength: timeSlots.value?.length
         })
-        return []
+        timeSections.value = []
+        return
     }
 
     try {
         const dateString = formatDateToString(date.value)
         if (!dateString) {
             console.error('無法格式化日期:', date.value)
-            return []
+            timeSections.value = []
+            return
         }
 
-        // 檢查是否為公休日
-        if (isClosedDay(date.value)) {
-            console.log('當日為公休日，不顯示時段:', dateString)
-            return []
+        // 檢查是否為任何類型的休假日（一般公休日 + 特殊休假日）
+        const isClosed = await isAnyClosedDay(date.value)
+        isClosedDayStatus.value = isClosed // 更新休假日狀態
+
+        if (isClosed) {
+            console.log('當日為休假日，不顯示時段:', dateString)
+            timeSections.value = []
+            return
         }
+
+        // 更新特殊休息時段
+        await updateSpecialRestTimeSlots()
 
         console.log('處理時間段，日期:', dateString, '總時段數:', timeSlots.value.length)
 
@@ -409,18 +556,39 @@ const timeSections = computed(() => {
 
         if (!Array.isArray(daySlots)) {
             console.error('getTimeSlotsForDate 返回了非數組值:', daySlots)
-            return []
+            timeSections.value = []
+            return
         }
 
         const sections = groupTimeSlotsByPeriod(daySlots)
         console.log('分組後時段:', sections)
 
-        return Array.isArray(sections) ? sections : []
+        timeSections.value = Array.isArray(sections) ? sections : []
     } catch (error) {
         console.error('處理時間段時發生錯誤:', error)
-        return []
+        timeSections.value = []
     }
-})
+}
+
+// 響應式變數來存儲特殊休息時段
+const specialRestTimeSlots = ref(null)
+
+// 更新特殊休息時段
+const updateSpecialRestTimeSlots = async () => {
+    if (!date.value) {
+        specialRestTimeSlots.value = null
+        return
+    }
+
+    try {
+        const restSlots = await getSpecialRestTimeSlots(date.value)
+        specialRestTimeSlots.value = restSlots
+        console.log('更新特殊休息時段:', restSlots)
+    } catch (error) {
+        console.error('更新特殊休息時段失敗:', error)
+        specialRestTimeSlots.value = null
+    }
+}
 
 const disabledTimeSlots = computed(() => {
     if (!date.value || !bookedSlots.value) {
@@ -435,7 +603,8 @@ const disabledTimeSlots = computed(() => {
         const dateString = formatDateToString(date.value)
         console.log('處理已預訂時段，日期:', dateString)
 
-        const filtered = bookedSlots.value
+        // 獲取已預訂的時間段
+        const bookedTimeSlots = bookedSlots.value
             .filter(slot => {
                 if (!slot) {
                     console.log('跳過無效的已預訂時段:', slot)
@@ -452,8 +621,40 @@ const disabledTimeSlots = computed(() => {
             })
             .filter(time => time)
 
-        console.log('最終禁用時間段:', filtered)
-        return filtered
+        // 獲取特殊休息時段
+        let specialRestSlots = []
+        if (specialRestTimeSlots.value) {
+            const { startTime, endTime } = specialRestTimeSlots.value
+            console.log('處理特殊休息時段:', startTime, '到', endTime)
+
+            // 生成休息時段內的所有時間段（每30分鐘一個）
+            const startHour = parseInt(startTime.split(':')[0])
+            const startMinute = parseInt(startTime.split(':')[1])
+            const endHour = parseInt(endTime.split(':')[0])
+            const endMinute = parseInt(endTime.split(':')[1])
+
+            let currentHour = startHour
+            let currentMinute = startMinute
+
+            while (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute)) {
+                const timeString = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`
+                specialRestSlots.push(timeString)
+
+                // 增加30分鐘
+                currentMinute += 30
+                if (currentMinute >= 60) {
+                    currentHour += 1
+                    currentMinute = 0
+                }
+            }
+
+            console.log('生成的特殊休息時段:', specialRestSlots)
+        }
+
+        // 合併已預訂時段和特殊休息時段
+        const allDisabledSlots = [...bookedTimeSlots, ...specialRestSlots]
+        console.log('最終禁用時間段:', allDisabledSlots)
+        return allDisabledSlots
     } catch (error) {
         console.error('處理已預訂時間段時發生錯誤:', error)
         return []
@@ -574,6 +775,9 @@ onMounted(async () => {
     // 先獲取營業時間資料
     await fetchStoreHoursData()
 
+    // 計算動態禁用日期
+    await calculateDisabledDates()
+
     // 再獲取時段資料
     await fetchTimeSlots(new Date())
 })
@@ -583,6 +787,9 @@ watch(() => props.restaurantId, async () => {
 
     // 先獲取營業時間資料
     await fetchStoreHoursData()
+
+    // 重新計算動態禁用日期
+    await calculateDisabledDates()
 
     // 再獲取時段資料
     await fetchTimeSlots(new Date())
@@ -653,9 +860,11 @@ watch(() => props.userData, (newUserData) => {
 }, { deep: true })
 
 // 監聽日期變化
-watch(date, (newDate) => {
+watch(date, async (newDate) => {
     if (newDate) {
-        fetchTimeSlots(newDate)
+        await fetchTimeSlots(newDate)
+        // 更新特殊休息時段
+        await updateSpecialRestTimeSlots()
     }
 })
 </script>

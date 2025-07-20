@@ -125,7 +125,7 @@ async function onSubmit() {
                 userEmail: userStore.email,
                 userFullName: data.userFullName,
                 userId: data.userId,
-                // userPhone: 後續補充
+                userPhone: data.userPhone
                 
             });
             // console.log('登入成功',data)

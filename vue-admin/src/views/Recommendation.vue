@@ -1,185 +1,281 @@
 <template>
-    <div class="container mt-4">
-        <h2>站方推薦標籤管理</h2>
-        <Message v-if="errorMessage" severity="error" :closable="false">{{ errorMessage }}</Message>
-    
-        <!-- 新增標籤表單 -->
-        <div class="card p-4 mb-4">
-        <h3>{{ editMode ? '編輯標籤' : '新增標籤' }}</h3>
-        <div class="p-fluid">
-            <div class="field">
-            <label for="tag">標籤名稱</label>
-            <InputText id="tag" v-model="newTag.tag" placeholder="輸入標籤名稱" />
+    <h2>站方推薦標籤管理</h2>
+    <div class="p-4">
+      <hr>
+  
+      <div class="table-card mb-4 p-4">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-6">
+            <div class="input-group">
+              <input id="newTagInput" v-model="newTag.tag" placeholder="輸入標籤名稱" class="form-control" type="text" />
+              <button class="btn btn-custom-add" @click="saveTag" :disabled="!newTag.tag">新增</button>
             </div>
-            <Button :label="editMode ? '更新' : '新增'" icon="pi pi-check" class="p-button-success mt-2" @click="saveTag" :disabled="!newTag.tag" />
-            <Button v-if="editMode" label="取消" icon="pi pi-times" class="p-button-secondary mt-2 ml-2" @click="cancelEdit" />
+            <div v-if="errorMessage" class="alert alert-danger mt-2" role="alert">
+              {{ errorMessage }}
+            </div>
+          </div>
         </div>
+      </div>
+  
+      <div class="table-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3>標籤列表</h3>
+          <button class="btn btn-success" @click="saveSortOrder">確認排序</button>
         </div>
-    
-        <!-- 標籤列表 -->
-        <div class="card">
-        <h3>標籤列表</h3>
-        <table class="table table-striped">
-            <thead>
-            <tr>           
-                <th><button @click="saveSortOrder" class="p-button-success mt-2">確認排序</button></th>
-                <th>標籤名稱</th>
-                <th>操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr
-                v-for="tag in displayedTags"
-                :key="tag.id"
-                draggable="true"
-                @dragstart="onDragStart(tag)"
-                @dragover.prevent
-                @drop="onDrop(tag)"
-                @dragenter.prevent
-            >            
-                <td>{{ tag.prime }}</td>
-                <td>{{ tag.tag }}</td>
-                <td>
-                <Button icon="pi pi-pencil" class="p-button-rounded p-button-warning mr-2" @click="editTag(tag)" />
-                <Button icon="pi pi-trash" class="p-button-rounded p-button-danger" @click="deleteTag(tag.id)" />
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="row row-cols-1 g-3">
+          <div class="col" v-for="tag in displayedTags" :key="tag.id"
+               draggable="true"
+               @dragstart="onDragStart(tag)"
+               @dragover.prevent
+               @drop="onDrop(tag)"
+               @dragenter.prevent>
+            <div class="tag-item border rounded p-2 d-flex align-items-center justify-content-between">
+              <span v-if="editingTagId !== tag.id" class="me-2">優先級: {{ tag.prime }} - {{ tag.tag }}</span>
+              <input v-else v-model="editedTagName" @keyup.enter="saveEdit(tag)" @blur="cancelEdit" class="form-control flex-grow-1 me-2" type="text" />
+              <div class="tag-actions d-flex gap-2">
+                <button v-if="editingTagId !== tag.id" class="btn btn-warning btn-sm" @click="startEdit(tag)">編輯</button>
+                <button v-else class="btn btn-success btn-sm" @click="saveEdit(tag)" @mousedown.prevent>儲存</button>
+                <button v-if="editingTagId === tag.id" class="btn btn-secondary btn-sm" @click="cancelEdit">取消</button>
+                <button class="btn btn-danger btn-sm" @click="deleteTag(tag.id)">刪除</button>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-    </template>
-    
-    <script setup>
-    import { ref, computed, onMounted } from 'vue';
-    import axios from 'axios';
-    import InputText from 'primevue/inputtext';
-    import Button from 'primevue/button';
-    import Message from 'primevue/message';
-    
-    // API 基礎 URL
-    const API_URL = import.meta.env.VITE_RECOM_URL;
-    
-    // 狀態管理
-    const tags = ref([]);
-    const newTag = ref({ tag: '' });
-    const editMode = ref(false);
-    const errorMessage = ref('');
-    const draggedTag = ref(null);
-    const tempOrder = ref([]);
-    
-    // 計算顯示的標籤（根據 tempOrder 或原始 tags 排序）
-    const displayedTags = computed(() => {
-        if (tempOrder.value.length > 0) {
-            return tempOrder.value;
-        }
-        return tags.value.sort((a, b) => a.prime - b.prime);
+  </template>
+  
+  <script setup>
+  import { ref, computed, onMounted } from 'vue';
+  import axios from 'axios';
+  import Swal from 'sweetalert2';
+  import InputText from 'primevue/inputtext';
+  import Button from 'primevue/button';
+  import Message from 'primevue/message';
+  
+  const API_URL = import.meta.env.VITE_RECOM_URL;
+  
+  const tags = ref([]);
+  const newTag = ref({ tag: '' });
+  const errorMessage = ref('');
+  const draggedTag = ref(null);
+  const tempOrder = ref([]);
+  const editingTagId = ref(null);
+  const editedTagName = ref('');
+  
+  const displayedTags = computed(() => {
+    if (tempOrder.value.length > 0) {
+      return tempOrder.value;
+    }
+    return [...tags.value].sort((a, b) => (a.prime || 0) - (b.prime || 0));
+  });
+  
+  const fetchTags = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      tags.value = response.data;
+      tempOrder.value = [];
+    } catch (error) {
+      errorMessage.value = '無法獲取標籤列表：' + error.message;
+      Swal.fire('錯誤', '無法獲取標籤列表，請稍後再試。', 'error');
+    }
+  };
+  
+  const onDragStart = (tag) => {
+    draggedTag.value = tag;
+    if (tempOrder.value.length === 0) {
+      tempOrder.value = [...tags.value].sort((a, b) => (a.prime || 0) - (b.prime || 0));
+    }
+  };
+  
+  const onDrop = (dropTag) => {
+    if (!draggedTag.value) return;
+    const fromIndex = tempOrder.value.findIndex(t => t.id === draggedTag.value.id);
+    const toIndex = tempOrder.value.findIndex(t => t.id === dropTag.id);
+    const newOrder = [...tempOrder.value];
+    newOrder.splice(fromIndex, 1);
+    newOrder.splice(toIndex, 0, draggedTag.value);
+    tempOrder.value = newOrder;
+    draggedTag.value = null;
+  };
+  
+  const saveSortOrder = async () => {
+  const result = await Swal.fire({
+    title: '確認保存排序嗎？',
+    text: "您將保存當前標籤的顯示順序。",
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: '是的，保存！',
+    cancelButtonText: '取消'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      // 確保 tempOrder.value 是最新的拖曳排序結果
+      if (tempOrder.value.length === 0) {
+        // 如果用戶沒有拖曳就點擊保存，則使用當前 tags.value 的排序
+        // 這通常不會發生，因為拖曳會自動填充 tempOrder
+        Swal.fire('提示', '沒有檢測到排序變動。', 'info');
+        return;
+      }
+
+      const updatedTags = tempOrder.value.map((tag, index) => ({
+        ...tag,
+        prime: index + 1 // 根據新順序賦予新的 prime 值
+      }));
+
+      // 呼叫後端 API 進行批量更新
+      await axios.post(`${API_URL}/batch-update`, updatedTags);
+
+      // 更新本地的 tags 數據為已排序且帶有新 prime 值的數據
+      // 這裡直接將 updatedTags 賦值給 tags.value
+      tags.value = updatedTags; // <--- 關鍵修改：tags.value 直接是已排序的結果
+      
+      // 清空 tempOrder.value，因為 tags.value 現在已經是正確的排序了
+      // 這樣 displayedTags 會直接使用 tags.value
+      tempOrder.value = []; // <--- 關鍵修改：清空臨時排序，讓 displayedTags 使用 tags.value
+
+      errorMessage.value = ''; // 清空錯誤訊息
+      Swal.fire('成功', '排序已保存！', 'success');
+    } catch (error) {
+      errorMessage.value = `保存排序失敗：${error.response?.data?.message || error.message}`;
+      Swal.fire('錯誤', '保存排序失敗，請稍後再試。', 'error');
+    }
+  }
+};
+  
+  const saveTag = async () => {
+    if (!newTag.value.tag.trim()) {
+      Swal.fire('警告', '標籤名稱不能為空。', 'warning');
+      return;
+    }
+    try {
+      const maxPrime = Math.max(...tags.value.map(t => t.prime || 0), 0);
+      await axios.post(API_URL, { ...newTag.value, prime: maxPrime + 1 });
+      Swal.fire('成功', '標籤新增成功！', 'success');
+      newTag.value = { tag: '' };
+      await fetchTags();
+      errorMessage.value = '';
+    } catch (error) {
+      errorMessage.value = `操作失敗：${error.response?.data?.message || error.message}`;
+      Swal.fire('錯誤', '操作失敗，請稍後再試。', 'error');
+    }
+  };
+  
+  const startEdit = (tag) => {
+    editingTagId.value = tag.id;
+    editedTagName.value = tag.tag;
+  };
+  
+  const cancelEdit = () => {
+    editingTagId.value = null;
+    editedTagName.value = '';
+  };
+  
+  const saveEdit = async (tag) => {
+    if (!editedTagName.value.trim()) {
+      Swal.fire('警告', '標籤名稱不能為空。', 'warning');
+      return;
+    }
+    try {
+      await axios.put(`${API_URL}/${tag.id}`, { id: tag.id, tag: editedTagName.value.trim(), prime: tag.prime });
+      const index = tags.value.findIndex(t => t.id === tag.id);
+      if (index !== -1) {
+        tags.value[index].tag = editedTagName.value.trim();
+        tags.value[index].prime = tag.prime;
+      }
+      editingTagId.value = null;
+      editedTagName.value = '';
+      Swal.fire('成功', '標籤修改成功！', 'success');
+      await fetchTags();
+    } catch (error) {
+      errorMessage.value = `操作失敗：${error.response?.data?.message || error.message}`;
+      Swal.fire('錯誤', '操作失敗，請稍後再試。', 'error');
+    }
+  };
+  
+  const deleteTag = async (id) => {
+    const result = await Swal.fire({
+      title: '確定要刪除此標籤嗎？',
+      text: "刪除後將無法恢復！",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '是的，刪除！',
+      cancelButtonText: '取消'
     });
-    
-    // 獲取所有標籤
-    const fetchTags = async () => {
-        try {
-            const response = await axios.get(API_URL);
-            tags.value = response.data;
-            tempOrder.value = []; // 重置臨時排序
-        } catch (error) {
-            errorMessage.value = '無法獲取標籤列表：' + error.message;
-        }
-    };
-    
-    // 拖曳開始
-    const onDragStart = (tag) => {
-        draggedTag.value = tag;
-        if (tempOrder.value.length === 0) {
-            tempOrder.value = [...tags.value].sort((a, b) => a.prime - b.prime);
-        }
-    };
-    
-    // 拖曳放置
-    const onDrop = (dropTag) => {
-        if (!draggedTag.value) return;
-        const fromIndex = tempOrder.value.findIndex(t => t.id === draggedTag.value.id);
-        const toIndex = tempOrder.value.findIndex(t => t.id === dropTag.id);
-        const newOrder = [...tempOrder.value];
-        newOrder.splice(fromIndex, 1);
-        newOrder.splice(toIndex, 0, draggedTag.value);
-        tempOrder.value = newOrder;
-        draggedTag.value = null;
-    };
-    
-    // 保存排序
-    const saveSortOrder = async () => {
-        try {
-            const updatedTags = tempOrder.value.map((tag, index) => ({
-                ...tag,
-                prime: index + 1
-            }));
-            await axios.post(`${API_URL}/batch-update`, updatedTags);
-            tags.value = updatedTags;
-            tempOrder.value = [];
-            errorMessage.value = '排序已保存';
-        } catch (error) {
-            errorMessage.value = `保存排序失敗：${error.response?.data?.message || error.message}`;
-        }
-    };
-    
-    // 新增或更新標籤
-    const saveTag = async () => {
-        try {
-            if (editMode.value) {
-                await axios.put(`${API_URL}/${newTag.value.id}`, newTag.value);
-            } else {
-                const maxPrime = Math.max(...tags.value.map(t => t.prime || 0), 0);
-                await axios.post(API_URL, { ...newTag.value, prime: maxPrime + 1 });
-            }
-            newTag.value = { tag: '' };
-            editMode.value = false;
-            await fetchTags();
-            errorMessage.value = '';
-        } catch (error) {
-            errorMessage.value = `操作失敗：${error.response?.data?.message || error.message}`;
-        }
-    };
-    
-    // 編輯標籤
-    const editTag = (tag) => {
-        newTag.value = { ...tag };
-        editMode.value = true;
-    };
-    
-    // 取消編輯
-    const cancelEdit = () => {
-        newTag.value = { tag: '' };
-        editMode.value = false;
+  
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(`${API_URL}/${id}`);
+        await fetchTags();
         errorMessage.value = '';
-    };
-    
-    // 刪除標籤
-    const deleteTag = async (id) => {
-        if (confirm('確定要刪除此標籤嗎？')) {
-            try {
-                await axios.delete(`${API_URL}/${id}`);
-                await fetchTags();
-                errorMessage.value = '';
-            } catch (error) {
-                errorMessage.value = `刪除失敗：${error.response?.data?.message || error.message}`;
-            }
-        }
-    };
-    
-    // 頁面加載時獲取標籤
-    onMounted(fetchTags);
-    </script>
-    
-    
-    <style scoped>
-    .table {
-    width: 100%;
+        Swal.fire('已刪除！', '標籤已成功刪除。', 'success');
+      } catch (error) {
+        errorMessage.value = `刪除失敗：${error.response?.data?.message || error.message}`;
+        Swal.fire('錯誤', '刪除失敗，請稍後再試。', 'error');
+      }
     }
-    .field {
-    margin-bottom: 1rem;
-    }
-    .ml-2 {
-    margin-left: 0.5rem;
-    }
-    </style>
+  };
+  
+  onMounted(fetchTags);
+  </script>
+  
+  <style scoped>
+  .table-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .input-group .form-control {
+    flex-grow: 1;
+  }
+  
+  .tag-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .tag-item:hover {
+    background-color: #e2e6ea;
+    transform: translateY(-2px);
+  }
+  
+  .tag-item span,
+  .tag-item input[type="text"] {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-right: 0.5rem;
+  }
+  
+  .tag-actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .btn-custom-add {
+    background-color: #0055b3;
+    border-color: #0055b3;
+    color: #fff;
+  }
+  
+  .btn-custom-add:hover {
+    background-color: #003d82;
+    border-color: #003d82;
+  }
+  
+  .btn-custom-add:disabled {
+    background-color: #6699cc;
+    border-color: #6699cc;
+    color: #fff;
+  }
+  </style>

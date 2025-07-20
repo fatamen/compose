@@ -9,7 +9,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-// @Configuration  // 暫時註解掉以避免郵件配置錯誤
+@Configuration  // 暫時註解掉以避免郵件配置錯誤
 @PropertySource("classpath:emailToken.properties")
 public class UserMailConfig {
 

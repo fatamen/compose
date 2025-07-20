@@ -43,7 +43,7 @@
                         <div class="restaurant-items">
                             <div v-for="item in restaurantCart.items" :key="item.id" class="cart-item">
                                 <div class="item-image">
-                                    <img :src="item.image" :alt="item.name" />
+                                    <img :src="item.food.imgResource" :alt="item.name" />
                                 </div>
 
                                 <div class="item-details">
@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed ,onMounted } from 'vue'
 import '@/assets/css/restaurant-theme.css'
 
 const props = defineProps({
@@ -192,7 +192,9 @@ const formatOptions = (optionValue) => {
     }
     return optionValue
 }
-
+onMounted(() => {
+    console.log('cartByRestaurant', props.cartByRestaurant)
+})
 
 
 </script>

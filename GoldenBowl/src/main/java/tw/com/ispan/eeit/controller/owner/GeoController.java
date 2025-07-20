@@ -34,10 +34,13 @@ public class GeoController {
             JSONArray arr = new JSONArray(response.body());
             if (arr.length() > 0) {
                 JSONObject first = arr.getJSONObject(0);
+                System.out.println("first"+first);
                 return Map.of(
-                        "success", true,
-                        "lat", first.getString("lat"),
-                        "lng", first.getString("lon"));
+                    "success", true,
+                    "lat", first.getString("lat"),
+                    "lon", first.getString("lon")
+                );
+               
             } else {
                 return Map.of("success", false, "message", "查無結果");
             }

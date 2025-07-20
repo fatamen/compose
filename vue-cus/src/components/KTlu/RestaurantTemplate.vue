@@ -47,7 +47,7 @@
             <div class="comment-map-container">
                 <!-- 評論摘要 -->
                 <div class="comment-wrapper">
-                    <CommentSummary :comments="comments" />
+                    <CommentSummary :comments="comments" :restaurant="restaurant" />
                 </div>
 
                 <!-- 地圖 -->

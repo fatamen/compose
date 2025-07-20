@@ -17,9 +17,9 @@ spring:
   #設定資料庫執行環境
   datasource:
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-    url: jdbc:sqlserver://192.168.36.62:9433;database=back2;trustServerCertificate=true
-    # url: jdbc:sqlserver://localhost:1433;database=back2;trustServerCertificate=true
-    # url: jdbc:sqlserver://localhost:1433;database=back2;trustServerCertificate=true
+    # url: jdbc:sqlserver://192.168.36.81:5433;database=java;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost:1433;database=back2;trustServerCertificate=true
+    # url: jdbc:sqlserver://localhost:1433;database=back;trustServerCertificate=true
     username: sa
     password: P@ssw0rd
 
@@ -65,3 +65,7 @@ spring:
       enabled: true
       max-file-size: 20MB
       max-request-size: 20MB
+
+app:
+  frontend:
+    url: http://localhost:5173

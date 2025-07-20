@@ -20,6 +20,9 @@ export default defineConfig({
       // 將 /api 代理到 Spring Boot 後端（假設你後端跑在 8080 port）
       '/api': 'http://localhost:8080'
     }
-  }
+  }, define: {
+    global: 'window',
+  },
+
 })
 

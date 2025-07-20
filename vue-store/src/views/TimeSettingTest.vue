@@ -28,11 +28,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TimeSettingManager from '../components/reservation/TimeSettingManager.vue';
 
-// 測試用的餐廳ID
-const storeId = ref(1);
+// 從 localStorage 讀取 storeId
+const storeId = ref(null);
+
+onMounted(() => {
+    const savedStoreId = localStorage.getItem('storeId');
+    if (savedStoreId) {
+        storeId.value = parseInt(savedStoreId);
+        console.log('從 localStorage 讀取到 storeId:', storeId.value);
+    } else {
+        console.warn('localStorage 中沒有 storeId，使用預設值 1');
+        storeId.value = 1;
+    }
+});
 </script>
 
 <style scoped>

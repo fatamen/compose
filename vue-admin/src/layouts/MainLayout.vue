@@ -29,16 +29,16 @@
                                     <i class="bi bi-gift me-2"></i> 優惠活動
                                 </router-link>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <router-link to="/subscription/plan" class="list-group-item parent" :class="{ active: isSubscriptionPlanActive }">
                                     <i class="bi bi-bag-check me-2"></i> 訂閱方案
                                 </router-link>
-                            </li>
-                            <li>
+                            </li> -->
+                            <!-- <li>
                                 <router-link to="/subscription/record" class="list-group-item parent" :class="{ active: isSubscriptionRecordActive }">
                                     <i class="bi bi-clock-history me-2"></i> 訂閱紀錄
                                 </router-link>
-                            </li>
+                            </li> -->
                             <li>
                                 <router-link to="/restaurantTag" class="list-group-item parent" :class="{ active: isRestaurantTagActive }">
                                     <i class="bi bi-tags me-2"></i> 餐廳標籤

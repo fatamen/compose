@@ -277,6 +277,36 @@ public class OrderService {
         } else {
             System.err.println("警告:更新訂單後，無法獲取有效的商店ID或訂單ID，未發送WebSocket通知。");
         }
+
+        // 檢查日誌 1: 確認是否進入通知發送邏輯 (給店家)
+        if (existingOrderBean.getStore() != null && existingOrderBean.getStore().getId() != null
+                && existingOrderBean.getId() != null) {
+            System.out.println("準備發送 WebSocket 通知給店家 StoreID: " + existingOrderBean.getStore().getId() + ", OrderID: "
+                    + existingOrderBean.getId());
+            orderNotificationController.notifyOrderStatusUpdate(
+                    existingOrderBean.getStore().getId(),
+                    existingOrderBean.getId().toString(),
+                    existingOrderBean.getStatus());
+            System.out.println("店家 WebSocket 通知已嘗試發送。");
+        } else {
+            System.err.println("警告:更新訂單後，無法獲取有效的商店ID或訂單ID，未發送店家WebSocket通知。");
+        }
+
+        // ✨ [新增邏輯] 發送 WebSocket 通知給用戶
+        // 確保 OrderBean 中包含用戶資訊 (UserBean)，並且用戶 ID 可用
+        if (existingOrderBean.getUser() != null && existingOrderBean.getUser().getId() != null
+                && existingOrderBean.getId() != null) {
+            System.out.println("準備發送 WebSocket 通知給用戶 UserID: " + existingOrderBean.getUser().getId() + ", OrderID: "
+                    + existingOrderBean.getId());
+            orderNotificationController.notifyUserOrderStatusUpdate(
+                    existingOrderBean.getUser().getId(), // 取得用戶 ID
+                    existingOrderBean.getId().toString(),
+                    existingOrderBean.getStatus());
+            System.out.println("用戶 WebSocket 通知已嘗試發送。");
+        } else {
+            System.err.println("警告:更新訂單後，無法獲取有效的用戶ID或訂單ID，未發送用戶WebSocket通知。");
+        }
+
         // 保存更新後的 OrderBean
         return Optional.of(orderRepository.save(existingOrderBean));
     }
@@ -384,12 +414,9 @@ public class OrderService {
         order.setStore(store);
 
         if (dto.getPromotionId() != null) {
-//          PromotionBean promo = new PromotionBean();
-//        	promo.setId(dto.getPromotionId());
-            PromotionBean promo = promotionRepository.getReferenceById(dto.getPromotionId());
+            PromotionBean promo = new PromotionBean();
+            promo.setId(dto.getPromotionId());
             order.setPromotion(promo);
-            System.out.println("設定進 order 的 promotionId 是：" + order.getPromotion().getId());
-
         }
 
         order.setTotal(dto.getTotal());
