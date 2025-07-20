@@ -15,8 +15,8 @@ import tw.com.ispan.eeit.model.entity.store.StoreBean;
 @Repository
 public interface StoreRepository extends JpaRepository<StoreBean, Integer> {
 
-        @EntityGraph(attributePaths = { "categories", "comments", "foods" })
-        Optional<StoreBean> findById(Integer id);
+        // @EntityGraph(attributePaths = { "categories", "comments", "foods" })
+        // Optional<StoreBean> findById(Integer id);
 
         @EntityGraph(attributePaths = { "categories", "foods", "foods.tags" })
         List<StoreBean> findAll();

@@ -162,14 +162,15 @@
   
   <script setup>
   import { ref, onMounted, reactive } from 'vue';
-  import axios from 'axios';
+  import axios from '@/plungins/axios.js';
+
   import { useRoute } from 'vue-router'; // 引入 useRoute
   
   // 定義一個訊息狀態
   const message = ref(null);
   
   // API 基本路徑
-  const API_BASE_URL = 'http://localhost:8080/api'; // 請根據你的後端實際運行地址調整
+  // const API_BASE_URL = 'http://localhost:8080/api'; // 請根據你的後端實際運行地址調整
   
   // 標籤相關狀態
   const tags = ref([]);
@@ -205,7 +206,7 @@
   
   const fetchTags = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/tags`);
+      const response = await axios.get(`/api/tags`);
       tags.value = response.data.map(tag => ({ ...tag, editing: false, originalName: tag.name }));
     } catch (error) {
       console.error('獲取標籤失敗:', error);
@@ -220,7 +221,7 @@
     }
     loading.tag.add = true;
     try {
-      const response = await axios.post(`${API_BASE_URL}/tags`, { name: newTag.name });
+      const response = await axios.post(`/api/tags`, { name: newTag.name });
       tags.value.push({ ...response.data, editing: false, originalName: response.data.name });
       newTag.name = '';
       showMessage('success', '標籤新增成功！');
@@ -244,7 +245,7 @@
     }
     loading.tag.save[tag.id] = true;
     try {
-      const response = await axios.put(`${API_BASE_URL}/tags/${tag.id}`, { name: tag.name });
+      const response = await axios.put(`/api/tags/${tag.id}`, { name: tag.name });
       Object.assign(tag, { ...response.data, editing: false, originalName: response.data.name });
       showMessage('success', '標籤更新成功！');
     } catch (error) {
@@ -266,7 +267,7 @@
     if (!confirm('確定要刪除此標籤嗎？')) return;
     loading.tag.delete[id] = true;
     try {
-      await axios.delete(`${API_BASE_URL}/tags/${id}`);
+      await axios.delete(`/api/tags/${id}`);
       tags.value = tags.value.filter(tag => tag.id !== id);
       showMessage('success', '標籤刪除成功！');
     } catch (error) {
@@ -281,7 +282,7 @@
   
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/categories`);
+      const response = await axios.get(`/api/categories`);
       categories.value = response.data.map(category => ({ ...category, editing: false, originalName: category.name }));
     } catch (error) {
       console.error('獲取分類失敗:', error);
@@ -296,7 +297,7 @@
     }
     loading.category.add = true;
     try {
-      const response = await axios.post(`${API_BASE_URL}/categories`, { name: newCategory.name });
+      const response = await axios.post(`/api/categories`, { name: newCategory.name });
       categories.value.push({ ...response.data, editing: false, originalName: response.data.name });
       newCategory.name = '';
       showMessage('success', '分類新增成功！');
@@ -320,7 +321,7 @@
     }
     loading.category.save[category.id] = true;
     try {
-      const response = await axios.put(`${API_BASE_URL}/categories/${category.id}`, { name: category.name });
+      const response = await axios.put(`/api/categories/${category.id}`, { name: category.name });
       Object.assign(category, { ...response.data, editing: false, originalName: response.data.name });
       showMessage('success', '分類更新成功！');
     } catch (error) {
@@ -342,7 +343,7 @@
     if (!confirm('確定要刪除此分類嗎？')) return;
     loading.category.delete[id] = true;
     try {
-      await axios.delete(`${API_BASE_URL}/categories/${id}`);
+      await axios.delete(`/api/categories/${id}`);
       categories.value = categories.value.filter(category => category.id !== id);
       showMessage('success', '分類刪除成功！');
     } catch (error) {

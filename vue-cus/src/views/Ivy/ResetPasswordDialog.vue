@@ -56,7 +56,7 @@ import { ref } from 'vue'
 import axios from '@/plungins/axios.js'
 
 const emit = defineEmits(['close', 'submit'])
-const props = defineProps(['email', 'token'])
+const props = defineProps(['token'])
 
 const password = ref('')
 const password2 = ref('')
@@ -83,19 +83,16 @@ async function submit() {
         error.value = '兩次輸入的密碼不一致'
         return
     }
-    if (!props.email || !props.token) {
-        error.value = '驗證資訊不完整，請重新點擊重設連結'
-        return
+    if (!props.token) {
+    error.value = '驗證資訊不完整，請重新點擊重設連結'
+    return
     }
-
     loading.value = true
     try {
         // 用 URLSearchParams 對應 @RequestParam
         const params = new URLSearchParams()
-        params.append('email', props.email)
         params.append('token', props.token)
         params.append('newPassword', password.value)
-
         await axios.post('/api/reset-password', params)
 
         // 成功：通知外層/跳訊息

@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import tw.com.ispan.eeit.model.entity.store.OpenHourBean;
 import tw.com.ispan.eeit.model.entity.store.StoreBean;
 
@@ -23,17 +22,12 @@ public interface OpenHourRepository extends JpaRepository<OpenHourBean, Integer>
         /**
          * 根據餐廳查詢營業時間
          */
-
         List<OpenHourBean> findByStore(StoreBean store);
-
-        List<OpenHourBean> findByStoreOrderByDayAsc(StoreBean store);
-
-        List<OpenHourBean> findByStoreOrderByDayDesc(StoreBean store);
 
         /**
          * 根據餐廳ID和星期查詢營業時間
          */
-        List<OpenHourBean> findByStoreIdAndDay(Integer storeId, Integer day);
+        Optional<OpenHourBean> findByStoreIdAndDay(Integer storeId, Integer day);
 
         /**
          * 根據餐廳和星期查詢營業時間
@@ -48,6 +42,11 @@ public interface OpenHourRepository extends JpaRepository<OpenHourBean, Integer>
                 Integer dayInt = day.getValue() == 7 ? 0 : day.getValue();
                 return findByStoreAndDay(store, dayInt);
         }
+        
+        
+        
+        @Query("SELECT oh FROM OpenHourBean oh WHERE oh.store.id = :storeId AND oh.day = :day")
+        Optional<OpenHourBean> findByStoreIdAndDay2(@Param("storeId") Integer storeId, @Param("day") DayOfWeek day);
 
         /**
          * 根據餐廳ID和星期查詢營業時間（使用 DayOfWeek 枚舉）
@@ -125,4 +124,15 @@ public interface OpenHourRepository extends JpaRepository<OpenHourBean, Integer>
                         @Param("storeId") Integer storeId,
                         @Param("dayOfWeek") Integer dayOfWeek,
                         @Param("checkTime") java.time.LocalTime checkTime);
+
+        /**
+         * 查詢餐廳的公休日列表
+         */
+        @Query(value = """
+                        SELECT oh.day FROM open_hour oh
+                        WHERE oh.store_id = :storeId
+                        AND oh.open_time IS NULL
+                        AND oh.close_time IS NULL
+                        """, nativeQuery = true)
+        List<Integer> findClosedDaysByStore(@Param("storeId") Integer storeId);
 }

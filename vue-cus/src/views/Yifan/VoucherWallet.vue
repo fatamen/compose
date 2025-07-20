@@ -7,8 +7,11 @@
     <!-- 📌 Tabs -->
     <ul class="nav nav-tabs justify-content-center mb-4 border-bottom-yellow">
       <li class="nav-item" v-for="tab in tabs" :key="tab.value">
-        <button class="nav-link tab-btn px-4 py-2 mx-1" :class="{ active: activeTab === tab.value }"
-          @click="activeTab = tab.value">
+        <button
+          class="nav-link tab-btn px-4 py-2 mx-1"
+          :class="{ active: activeTab === tab.value }"
+          @click="activeTab = tab.value"
+        >
           <i :class="tab.icon" class="me-2"></i>{{ tab.label }}
         </button>
       </li>
@@ -16,8 +19,13 @@
 
     <!-- 📌 列表區：直接顯示 promotionList -->
     <div v-if="promotionList.length > 0" class="d-flex flex-column gap-3">
-      <VoucherCard v-for="promotion in promotionList" :key="promotion.id" :promotion="promotion"
-        :cartAmount="cartAmount" @use="handleUse" />
+      <VoucherCard
+        v-for="promotion in promotionList"
+        :key="promotion.id"
+        :promotion="promotion"
+        :cartAmount="cartAmount"
+        @use="handleUse"
+      />
     </div>
     <div v-else class="text-muted text-center mt-5 fs-5">
       <i class="fas fa-ticket-alt me-2 text-warning"></i>
@@ -31,12 +39,17 @@ import VoucherCard from '@/components/Yifan/VoucherCard.vue'
 //引入 axios 並撰寫 API 請求
 import axios from '@/plungins/axios.js'
 import { onMounted, ref, watch } from 'vue'
-
+import { useUserStore } from '@/stores/user'
 //引入優惠券圖片
 import globalImg from '@/assets/vouchers/global.png'
 import restaurantImg from '@/assets/vouchers/restaurant.png'
 import foodImg from '@/assets/vouchers/food.png'
 import memberImg from '@/assets/vouchers/member.png'
+
+//立即使用的按鈕導頁到 /search
+import { useRouter } from 'vue-router'
+const router = useRouter()
+const userStore = useUserStore();
 
 //初始資料
 const cartAmount = ref(500)
@@ -48,22 +61,12 @@ const tabs = [
   { label: '全平台', value: 'global', icon: 'fas fa-globe' },
   { label: '餐廳限定', value: 'restaurant', icon: 'fas fa-utensils' },
   { label: '餐點限定', value: 'food', icon: 'fas fa-hamburger' },
-  { label: '會員限定', value: 'member', icon: 'fas fa-crown' },
+  // { label: '會員限定', value: 'member', icon: 'fas fa-crown' },
   { label: '歷史紀錄', value: 'history', icon: 'fas fa-clock' }
 ]
 
 //優惠券資料
-const promotionList = ref([]) //改連後端資料庫
-// const filteredPromotions = computed(() => {
-//   const current = activeTab.value
-//   return promotionList.value.filter(p => {
-//     if (current === 'history') return p.used
-//     if (current === 'all') return !p.used
-//     if (p.used) return false
-//     return p.type === current
-//   })
-// })
-
+const promotionList = ref([]) 
 
 // ✅ 點選 tab 時重新載入分類資料
 watch(activeTab, async (tab) => {
@@ -81,18 +84,42 @@ const loadPromotions = async (tab) => {
     let url = ''
 
     if (tab === 'all') {
-      url = '/promotions/all-available' // ✅ 顯示所有有效券（不是結帳篩選用）
+      url = '/promotions/all-available'
     } else if (tab === 'history') {
-      promotionList.value = [] // ✅ 尚未串 /used 資料，預設空清單
+      const userId = userStore.id // 🔁 改成你的實際使用者 ID，或從 pinia 拿
+      const response = await axios.get(`/promotions/used`, {
+        params: { userId }
+      })
+
+      promotionList.value = response.data.map(item => {
+        let imageUrl = globalImg
+        let iconClass = 'fas fa-globe'
+
+        if (item.type === 'restaurant') {
+          imageUrl = restaurantImg
+          iconClass = 'fas fa-utensils'
+        } else if (item.type === 'food') {
+          imageUrl = foodImg
+          iconClass = 'fas fa-hamburger'
+        } else if (item.type === 'member') {
+          imageUrl = memberImg
+          iconClass = 'fas fa-crown'
+        }
+
+        return {
+          ...item,
+          iconClass,
+          imageUrl,
+          used: true // ✅ 標記為已使用
+        }
+      })
       return
     } else {
-      url = `/promotions/by-type?type=${tab}` // ✅ 類型分類券
+      url = `/promotions/by-type?type=${tab}`
     }
 
     const response = await axios.get(url)
 
-
-    // 將回傳的優惠券加上圖示與圖片（根據 type）
     promotionList.value = response.data.map(item => {
       let imageUrl = globalImg
       let iconClass = 'fas fa-globe'
@@ -120,53 +147,16 @@ const loadPromotions = async (tab) => {
 }
 
 
-
-
-
-
-
-
-
 //使用優惠券
 const handleUse = (promo) => {
   console.log('使用優惠券：', promo.title)
+  router.push('/search') // ✅ 導頁到 /search
 }
 
-// onMounted(async () => { //載入優惠券資料
-//   try {
-//     const response = await axios.get('/promotions/available') //先取得全部「可使用」的優惠券
-//     console.log('載入優惠券成功', response)
-//     promotionList.value = response.data.map(item => {
-//       let imageUrl = globalImg
-//       let iconClass = 'fas fa-globe'
-//       let type = 'global'
-
-//       if (item.store?.id) {
-//         imageUrl = restaurantImg
-//         iconClass = 'fas fa-utensils'
-//         type = 'restaurant'
-//       } else if (item.tag?.id) {
-//         imageUrl = foodImg
-//         iconClass = 'fas fa-hamburger'
-//         type = 'food'
-//       } else if (item.plan?.id) {
-//         imageUrl = memberImg
-//         iconClass = 'fas fa-crown'
-//         type = 'member'
-//       }
-
-//       return {
-//         ...item,
-//         iconClass,
-//         imageUrl,
-//         type,
-//       }
-//     })
-//   } catch (error) {
-//     console.error('載入優惠券失敗', error)
-//   }
-// })
-
+defineProps({
+  promotion: Object,
+  cartAmount: Number
+})
 
 </script>
 
@@ -177,8 +167,7 @@ h2 {
 }
 
 .custom-width {
-  max-width: 1200px;
-  /* 你可以自己調整為 700px 或 600px */
+  max-width: 1200px; /* 你可以自己調整為 700px 或 600px */
   width: 100%;
 }
 

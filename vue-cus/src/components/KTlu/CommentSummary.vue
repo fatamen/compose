@@ -1,5 +1,5 @@
 <template>
-    <div class="comment-summary goldenbowl-restaurant-theme">
+    <div class="comment-summary-container goldenbowl-restaurant-theme">
         <h4 class="summary-title">顧客評價</h4>
         <div class="summary-content">
             <div class="overall-score">
@@ -8,7 +8,10 @@
                     <i v-for="n in 5" :key="n"
                         :class="['bi', n <= Math.round(averageScore) ? 'bi-star-fill' : 'bi-star']"></i>
                 </div>
-                <span class="review-count">評論數 ({{ totalReviews }})</span>
+                <!-- <span class="review-count">評論數 ({{ totalReviews }})</span> -->
+                <span class="review-count" @click="openComment()" style="cursor: pointer;">
+                    ({{ totalReviews }} 則評論)
+                </span>
             </div>
             <div class="score-distribution">
                 <div v-for="score in 5" :key="score" class="score-row">
@@ -21,35 +24,167 @@
             </div>
         </div>
     </div>
+
+    <!-- 新增：評論模態框 -->
+    <Comment v-if="showComment" :storeId="selectedStoreId" @close="closeComment" />
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useUserStore } from '@/stores/user';
+import Comment from '@/components/Jimmy/Comment.vue';
+
+const userStore = useUserStore();
+const emit = defineEmits(['openComment'])
 
 const props = defineProps({
     comments: {
         type: Array,
         default: () => []
+    },
+    restaurant: { // 這個 props 現在接收的是 Home.vue 經過所有篩選和模式選擇後的結果
+        type: Object,
+        required: true,
+        default: () => { },
+    },
+})
+
+// 新增：控制評論模態框顯示的狀態
+const showComment = ref(false);
+const selectedStoreId = ref(null); // 用於儲存當前點擊的餐廳 ID
+
+const openComment = (storeId) => {
+    console.log("User:" + userStore.userId);
+    console.log("Opening comments for store:", storeId);
+
+    // 如果沒有傳入 storeId，嘗試從 restaurant 物件獲取
+    let finalStoreId = storeId;
+    if (!finalStoreId) {
+        finalStoreId = getRestaurantId();
     }
-})
 
+    if (!finalStoreId) {
+        console.warn("No store ID provided for opening comments");
+        console.warn("Available data:", {
+            restaurant: props.restaurant,
+            comments: props.comments
+        });
+        return;
+    }
+
+    // 確保 storeId 是數字類型
+    finalStoreId = parseInt(finalStoreId);
+    if (isNaN(finalStoreId)) {
+        console.warn("Invalid store ID:", storeId);
+        return;
+    }
+
+    // 設定選中的餐廳 ID 並顯示評論模態框
+    selectedStoreId.value = finalStoreId;
+    showComment.value = true;
+
+    console.log("Comment modal state:", {
+        showComment: showComment.value,
+        selectedStoreId: selectedStoreId.value
+    });
+
+    // 同時發射事件給父組件（保持向後兼容）
+    emit('openComment', finalStoreId);
+};
+
+// 關閉評論模態框
+const closeComment = () => {
+    console.log("Closing comment modal");
+    showComment.value = false;
+    selectedStoreId.value = null;
+};
+
+
+
+
+
+
+
+
+
+
+// 計算平均分數
 const averageScore = computed(() => {
-    if (props.comments.length === 0) return 0
-    const total = props.comments.reduce((sum, comment) => sum + (comment.score || 0), 0)
-    return total / props.comments.length
+    const comments = getComments()
+    if (comments.length === 0) return 0
+    const total = comments.reduce((sum, comment) => sum + (comment.score || 0), 0)
+    return total / comments.length
 })
 
-const totalReviews = computed(() => props.comments.length)
+// 計算總評論數
+const totalReviews = computed(() => getComments().length)
 
+// 計算各星級評論數量
 const scoreCounts = computed(() => {
     const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
-    props.comments.forEach(comment => {
+    const comments = getComments()
+    comments.forEach(comment => {
         if (comment.score >= 1 && comment.score <= 5) {
             counts[comment.score]++
         }
     })
     return counts
 })
+
+// 獲取評論資料的統一方法
+const getComments = () => {
+    // 優先使用 props.comments
+    if (props.comments && props.comments.length > 0) {
+        return props.comments
+    }
+
+    // 如果 props.comments 為空，嘗試從 restaurant 物件中獲取
+    if (props.restaurant && props.restaurant.comments) {
+        return props.restaurant.comments
+    }
+
+    // 如果都沒有，返回空陣列
+    return []
+}
+
+// 獲取餐廳 ID
+const getRestaurantId = () => {
+    console.log("Getting restaurant ID from:", props.restaurant);
+
+    // 檢查 restaurant 物件是否存在
+    if (!props.restaurant) {
+        console.warn("Restaurant object is null or undefined");
+        return null;
+    }
+
+    // 檢查所有可能的 ID 欄位
+    console.log("Available restaurant properties:", Object.keys(props.restaurant));
+
+    if (props.restaurant.id) {
+        console.log("Using restaurant.id:", props.restaurant.id);
+        return props.restaurant.id;
+    }
+
+    if (props.restaurant.storeId) {
+        console.log("Using restaurant.storeId:", props.restaurant.storeId);
+        return props.restaurant.storeId;
+    }
+
+    if (props.restaurant.store_id) {
+        console.log("Using restaurant.store_id:", props.restaurant.store_id);
+        return props.restaurant.store_id;
+    }
+
+    // 如果都沒有，嘗試從 comments 中獲取 storeId
+    if (props.comments && props.comments.length > 0 && props.comments[0].storeId) {
+        console.log("Using comment.storeId:", props.comments[0].storeId);
+        return props.comments[0].storeId;
+    }
+
+    console.warn("No restaurant ID found in any expected field");
+    console.warn("Restaurant object:", props.restaurant);
+    return null;
+}
 
 const getScorePercentage = (score) => {
     if (totalReviews.value === 0) return 0
@@ -58,7 +193,7 @@ const getScorePercentage = (score) => {
 </script>
 
 <style scoped>
-.comment-summary {
+.comment-summary-container {
     width: 100%;
     padding: 1.5rem;
     background: var(--restaurant-bg-light);
@@ -68,7 +203,7 @@ const getScorePercentage = (score) => {
     transition: all 0.3s ease;
 }
 
-.comment-summary:hover {
+.comment-summary-container:hover {
     box-shadow: 0 6px 20px var(--restaurant-shadow-light);
     transform: translateY(-2px);
 }
@@ -136,10 +271,18 @@ const getScorePercentage = (score) => {
 }
 
 .review-count {
-    color: var(--restaurant-text-secondary);
+    color: #007bff;
+    /* 藍色鏈接 */
     font-size: 0.9rem;
     font-weight: 500;
     margin-left: auto;
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.review-count:hover {
+    color: #0056b3;
 }
 
 .score-distribution {

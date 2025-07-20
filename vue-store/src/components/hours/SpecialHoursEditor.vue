@@ -1,9 +1,12 @@
 <script setup>
 import { ref ,watch  } from 'vue';
 import Swal from 'sweetalert2';
+import { useUserStore } from '@/stores/user.js'
 
 const emit = defineEmits(['close', 'save']);
 
+//取得使用者
+const userStore = useUserStore();
 // 確保月份和日期始終是兩位數的格式化函數
 const getFormattedDate = (date) => {
   const year = date.getFullYear();
@@ -15,7 +18,7 @@ const getFormattedDate = (date) => {
 
 const today = new Date(); // 取得當前日期
 const todayFormatted = getFormattedDate(today);
-const storeId = ref(1); // 假設的商店 ID，實際應該從後端獲取
+const storeId = userStore.ownerId; // 假設的商店 ID，實際應該從後端獲取
 
 //預設表單資訊
 const specialHoursList = ref({
@@ -69,7 +72,7 @@ function transformSpecialHours(specialHoursData) {
     // 單日模式
     const dto = {
       id: null, // 如果是新增，ID 設為 null，由後端生成
-      storeId: storeId.value,
+      storeId: storeId,
       date: specialHoursData.specificDate, // 將 specificDate 映射到 date
       openTime: specialHoursData.openTime,
       closeTime: specialHoursData.closeTime,
@@ -87,7 +90,7 @@ function transformSpecialHours(specialHoursData) {
     while (currentDate <= endDate) {
       const dto = {
         id: null, // 如果是新增，ID 設為 null
-        storeId: storeId.value,
+        storeId: storeId,
         date: getFormattedDate(currentDate), // 將當前日期格式化
         openTime: specialHoursData.openTime,
         closeTime: specialHoursData.closeTime,

@@ -20,6 +20,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  define: {
+    global: 'globalThis',
+  },
   server: {
     proxy: {
       '/api': {
@@ -28,8 +31,5 @@ export default defineConfig({
         secure: false
       }
     }
-  },
-   define: {
-    global: 'window',
   },
 })

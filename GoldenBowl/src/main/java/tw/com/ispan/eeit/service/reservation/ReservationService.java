@@ -641,12 +641,13 @@ public class ReservationService {
         return convertToTimeSlotSimpleDTO(timeSlots, storeId);
     }
 
-    public List<TimeSlotSimpleDTO> getAvailableTimeSlotsByDate(Integer storeId, LocalDate date) {
+   public List<TimeSlotSimpleDTO> getAvailableTimeSlotsByDate(Integer storeId, LocalDate date) {
         StoreBean store = storeRepository.findById(storeId).orElse(null);
         if (store == null) {
             return new ArrayList<>();
         }
-        List<TimeSlot> timeSlots = timeSlotRepository.findByStoreAndDayAndIsActive(store, date, true);
+        // 修改：查詢所有時段（包括非啟用的），而不是只查詢啟用的
+        List<TimeSlot> timeSlots = timeSlotRepository.findByStoreAndDay(store, date);
         return convertToTimeSlotSimpleDTO(timeSlots, storeId);
     }
 

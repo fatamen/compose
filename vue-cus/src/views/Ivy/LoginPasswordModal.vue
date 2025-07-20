@@ -13,7 +13,7 @@
                     <button type="button" class="btn-close custom-close" @click="goemit('close')"></button>
                 </div>
                 <div class="modal-body d-flex flex-column align-items-center pt-0">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3059/3059446.png" alt="lock"
+                    <img src="https://cdn-icons-png.flaticon.com/512/5278/5278638.png" alt="lock"
                         class="email-img mb-3">
                     <div class="fw-bold title mb-1">歡迎回來！</div>
                     <div class="desc mb-2" style="width:100%;text-align:center;font-size:16px;color:#222;">
@@ -95,6 +95,9 @@ async function onSubmit() {
         });
         return
     }
+    console.log('email', userStore.email)
+    console.log('password', password.value)
+
     try {
         // 路徑請和後端對應，如：/api/users/login
         const res = await axios.post('/api/users/login', {
@@ -111,7 +114,7 @@ async function onSubmit() {
                 title: '登入成功！', // 標題
                 text: '歡迎回來！', // 可以加上歡迎語句
                 showConfirmButton: false, // 不顯示確認按鈕
-                timer: 500, // 0.5 秒後自動關閉 //0719 JIMMY
+                timer: 1500, // 1.5 秒後自動關閉
                 timerProgressBar: true // 顯示進度條
             });
             // userStore.setLogin({
@@ -125,7 +128,7 @@ async function onSubmit() {
                 userEmail: userStore.email,
                 userFullName: data.userFullName,
                 userId: data.userId,
-                // userPhone: 後續補充
+                userPhone: data.userPhone,
                 
             });
             // console.log('登入成功',data)

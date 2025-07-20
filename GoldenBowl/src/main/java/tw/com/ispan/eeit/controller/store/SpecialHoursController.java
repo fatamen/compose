@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,57 +32,54 @@ public class SpecialHoursController {
 
     @Autowired
     private SpecialHoursService specialHoursService;
-    
-    //取得店家所有的營業時間
+
+    // 取得店家所有的營業時間
     @GetMapping("/all")
     public ResponseEntity<List<SpecialHoursDTO>> getAllSpecialHours(@PathVariable Integer storeId) {
 
-	    try {
-	
-	    // 假設 Service 層有這樣一個方法
-	
-	     List<SpecialHoursDTO> specialHours = specialHoursService.getSpecialHoursByStoreId(storeId);
-	
-	    // 這裡暫時用 getSpecialHoursByStoreIdAndDate 模擬，但需要日期參數
-	
-	    // 考慮實現一個查詢所有或未來特殊時間的方法
-	
-	   	
-	     return ResponseEntity.ok(specialHours);
-	
-	    } catch (IllegalArgumentException e) {
-	
-	    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-	
-	    } catch (Exception e) {
-	
-	    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-	
-	    }
+        try {
+
+            // 假設 Service 層有這樣一個方法
+
+            List<SpecialHoursDTO> specialHours = specialHoursService.getSpecialHoursByStoreId(storeId);
+
+            // 這裡暫時用 getSpecialHoursByStoreIdAndDate 模擬，但需要日期參數
+
+            // 考慮實現一個查詢所有或未來特殊時間的方法
+
+            return ResponseEntity.ok(specialHours);
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+
+        } catch (Exception e) {
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+
+        }
 
     }
-    
-    
-    
+
     @DeleteMapping("/{dayId}")
     public ResponseEntity<Void> deleteById(@PathVariable Integer dayId) {
-    	
-    	 try {
-             specialHoursService.deleteById(dayId);
-             // 成功刪除後，通常返回 204 No Content (表示請求成功但沒有內容可返回)
-             return ResponseEntity.noContent().build();
-         } catch (IllegalArgumentException e) {
-             // 例如，如果 ID 不存在或格式不正確，可以返回 400 Bad Request
-             return ResponseEntity.badRequest().build();
-         } catch (Exception e) {
-             // 捕獲其他所有異常，返回 500 Internal Server Error
-             // 建議在這裡記錄日誌 (e.g., logger.error("Failed to delete special hour with ID: " + dayId, e);)
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-         }
+
+        try {
+            specialHoursService.deleteById(dayId);
+            // 成功刪除後，通常返回 204 No Content (表示請求成功但沒有內容可返回)
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            // 例如，如果 ID 不存在或格式不正確，可以返回 400 Bad Request
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            // 捕獲其他所有異常，返回 500 Internal Server Error
+            // 建議在這裡記錄日誌 (e.g., logger.error("Failed to delete special hour with ID: " +
+            // dayId, e);)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
-    
-    
-    //-----------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------
 
     /**
      * 設定特殊休假日
@@ -100,7 +99,7 @@ public class SpecialHoursController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
+
     /**
      * 設定特殊營業時間
      */
@@ -140,8 +139,8 @@ public class SpecialHoursController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
-    //儲存所有
+
+    // 儲存所有
     @PutMapping("/saveAll") // 使用 PUT，表示對某個集合的替換或更新
     public ResponseEntity<List<SpecialHoursDTO>> saveAllSpecialHours(
             @PathVariable Integer storeId,
@@ -163,7 +162,7 @@ public class SpecialHoursController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-    
+
     /**
      * 查詢餐廳所有特殊設定
      */
@@ -203,18 +202,19 @@ public class SpecialHoursController {
     /**
      * 取消特殊設定
      */
-    @DeleteMapping("/{date}")
-    public ResponseEntity<String> cancelSpecialSetting(
-            @PathVariable Integer storeId,
-            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    // @DeleteMapping("/{date}")
+    // public ResponseEntity<String> cancelSpecialSetting(
+    // @PathVariable Integer storeId,
+    // @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date)
+    // {
 
-        boolean success = specialHoursService.cancelSpecialSetting(storeId, date);
-        if (success) {
-            return ResponseEntity.ok("成功取消 " + date + " 的特殊設定");
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
+    // boolean success = specialHoursService.cancelSpecialSetting(storeId, date);
+    // if (success) {
+    // return ResponseEntity.ok("成功取消 " + date + " 的特殊設定");
+    // } else {
+    // return ResponseEntity.notFound().build();
+    // }
+    // }
 
     /**
      * 檢查是否為特殊休假日
@@ -251,5 +251,41 @@ public class SpecialHoursController {
 
         SpecialHoursSummary summary = specialHoursService.getSpecialHoursSummary(storeId, startDate, endDate);
         return ResponseEntity.ok(summary);
+    }
+
+    /**
+     * 檢查特定日期的特殊營業時間狀態
+     */
+    @GetMapping("/check/{date}")
+    public ResponseEntity<Map<String, Object>> checkSpecialHoursStatus(
+            @PathVariable Integer storeId,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        try {
+            Optional<SpecialHoursBean> specialHoursOpt = specialHoursService.getSpecialHoursByDate(storeId, date);
+
+            Map<String, Object> response = new HashMap<>();
+
+            if (specialHoursOpt.isPresent()) {
+                SpecialHoursBean specialHours = specialHoursOpt.get();
+                response.put("exists", true);
+                response.put("isClose", specialHours.getIsClose());
+                response.put("openTime", specialHours.getOpenTime());
+                response.put("closeTime", specialHours.getCloseTime());
+                response.put("date", specialHours.getDate());
+            } else {
+                response.put("exists", false);
+                response.put("isClose", null);
+                response.put("openTime", null);
+                response.put("closeTime", null);
+                response.put("date", date);
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }

@@ -3,6 +3,7 @@ package tw.com.ispan.eeit.controller.store;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,8 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import tw.com.ispan.eeit.exception.ResourceNotFoundException;
 import tw.com.ispan.eeit.model.dto.store.OpenHourDTO;
+import tw.com.ispan.eeit.model.dto.store.SpecialHoursDTO;
 import tw.com.ispan.eeit.model.dto.store.StoreOpenStatusDTO;
 import tw.com.ispan.eeit.model.entity.store.OpenHourBean;
+import tw.com.ispan.eeit.model.entity.store.SpecialHoursBean;
 import tw.com.ispan.eeit.service.store.OpenHourService;
 
 @RestController
@@ -55,10 +58,7 @@ public class OpenHourController {
             return ResponseEntity.notFound().build();
         }
     }
-    
-        
-    
-    
+
     /**
      * 取得餐廳的營業時間設定 (完整版本，包含所有關聯資料)
      */
@@ -97,7 +97,7 @@ public class OpenHourController {
      * 設定餐廳的營業時間
      */
     @PostMapping
-    public ResponseEntity<OpenHourDTO> createOpenHour(
+    public ResponseEntity<OpenHourDTO> setOpenHour(
             @PathVariable Integer storeId,
             @RequestParam DayOfWeek day,
             @RequestParam(required = false) String openTime,
@@ -279,5 +279,28 @@ public class OpenHourController {
         }
     }
 
+    // --- 獲取店家今日營業時間 (核心需求) ---
+    /**
+     * GET /api/stores/{storeId}/todayOpenHour
+     * 獲取指定店家今日的營業時間。
+     *
+     * @param storeId 店家ID
+     * @return 今日營業時間的 OpenHourDTO，如果今日不營業或無設定，則返回 404 Not Found
+     */
+    @GetMapping("/todayOpenHour")
+    public ResponseEntity<OpenHourDTO> getStoreTodayOpenHour(@PathVariable Integer storeId) {
+        // 調用 Service 層的方法獲取今日營業時間
+        Optional<OpenHourDTO> todayOpenHour;
+
+        todayOpenHour = openHourService.getStoreTodayOpenHour(storeId);
+
+        // 判斷是否找到了今日的營業時間
+        if (todayOpenHour.isPresent()) {
+            return ResponseEntity.ok(todayOpenHour.get()); // 找到則返回 200 OK 和營業時間 DTO
+        } else {
+            // 如果沒找到，表示今天不營業或沒有設定，返回 404 Not Found
+            return ResponseEntity.notFound().build();
+        }
+    }
 
 }

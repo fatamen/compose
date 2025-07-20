@@ -26,6 +26,7 @@
 </template>
 
 <script setup>
+import Swal from 'sweetalert2'
 const props = defineProps({ show: Boolean })
 const emit = defineEmits(['close', 'back', 'backToLogin'])
 </script>

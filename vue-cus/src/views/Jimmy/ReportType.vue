@@ -56,7 +56,8 @@
     
     <script setup>
     import { ref, computed, onMounted } from 'vue';
-    import axios from 'axios';
+    import axios from '@/plungins/axios.js';
+
     import InputText from 'primevue/inputtext';
     import Button from 'primevue/button';
     import Message from 'primevue/message';
@@ -83,7 +84,7 @@
     // 獲取所有標籤
     const fetchReports = async () => {
         try {
-            const response = await axios.get(API_URL);
+            const response = await axios.get('/api/report-type');
             reports.value = response.data;
             tempOrder.value = []; // 重置臨時排序
         } catch (error) {
@@ -118,7 +119,7 @@
                 ...tag,
                 prime: index + 1
             }));
-            await axios.post(`${API_URL}/batch-update`, updatedTags);
+            await axios.post(`/api/report-type/batch-update`, updatedTags);
             reports.value = updatedTags;
             tempOrder.value = [];
             errorMessage.value = '排序已保存';
@@ -131,10 +132,10 @@
     const saveReport = async () => {
         try {
             if (editMode.value) {
-                await axios.put(`${API_URL}/${newReport.value.id}`, newReport.value);
+                await axios.put(`/api/report-type/${newReport.value.id}`, newReport.value);
             } else {
                 const maxPrime = Math.max(...reports.value.map(t => t.prime || 0), 0);
-                await axios.post(API_URL, { ...newReport.value, prime: maxPrime + 1 });
+                await axios.post('/api/report-type', { ...newReport.value, prime: maxPrime + 1 });
             }
             newReport.value = { type: '', description: '' };
             editMode.value = false;
@@ -162,7 +163,7 @@
     const deleteReport = async (id) => {
         if (confirm('確定要刪除此標籤嗎？')) {
             try {
-                await axios.delete(`${API_URL}/${id}`);
+                await axios.delete(`/api/report-type/${id}`);
                 await fetchReports();
                 errorMessage.value = '';
             } catch (error) {

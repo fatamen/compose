@@ -23,136 +23,133 @@ import tw.com.ispan.eeit.util.DatetimeConvert;
 public class SpecialHoursService {
 
 	private final SpecialHoursRepository specialHoursRepository;
-    private final StoreRepository storeRepository;
+	private final StoreRepository storeRepository;
 
-    @Autowired // 自動注入 Repository
-    public SpecialHoursService(SpecialHoursRepository specialHoursRepository, StoreRepository storeRepository) {
-        this.specialHoursRepository = specialHoursRepository;
-        this.storeRepository = storeRepository;
-    }
+	@Autowired // 自動注入 Repository
+	public SpecialHoursService(SpecialHoursRepository specialHoursRepository, StoreRepository storeRepository) {
+		this.specialHoursRepository = specialHoursRepository;
+		this.storeRepository = storeRepository;
+	}
 
-    
-    //儲存多筆
-    @Transactional // 確保整個批次操作的原子性
-    public List<SpecialHoursDTO> saveAll(List<SpecialHoursDTO> specialHoursDTOList) {
-        if (specialHoursDTOList == null || specialHoursDTOList.isEmpty()) {
-            // 如果傳入的列表為空，可直接返回空列表或拋出異常，視業務需求而定
-            return new ArrayList<>();
-        }
+	// 儲存多筆
+	@Transactional // 確保整個批次操作的原子性
+	public List<SpecialHoursDTO> saveAll(List<SpecialHoursDTO> specialHoursDTOList) {
+		if (specialHoursDTOList == null || specialHoursDTOList.isEmpty()) {
+			// 如果傳入的列表為空，可直接返回空列表或拋出異常，視業務需求而定
+			return new ArrayList<>();
+		}
 
-        // 並獲取 StoreBean 實體
-        Integer commonStoreId = specialHoursDTOList.get(0).getStoreId();
-        if (commonStoreId == null) {
-            throw new IllegalArgumentException("Store ID cannot be null in the SpecialHoursDTO list.");
-        }
-        StoreBean store = storeRepository.findById(commonStoreId)
-                .orElseThrow(() -> new IllegalArgumentException("Store not found with ID: " + commonStoreId));
+		// 並獲取 StoreBean 實體
+		Integer commonStoreId = specialHoursDTOList.get(0).getStoreId();
+		if (commonStoreId == null) {
+			throw new IllegalArgumentException("Store ID cannot be null in the SpecialHoursDTO list.");
+		}
+		StoreBean store = storeRepository.findById(commonStoreId)
+				.orElseThrow(() -> new IllegalArgumentException("Store not found with ID: " + commonStoreId));
 
-        List<SpecialHoursDTO> savedResultList = new ArrayList<>();
+		List<SpecialHoursDTO> savedResultList = new ArrayList<>();
 
-        // 遍歷每個傳入的 DTO 進行處理
-        for (SpecialHoursDTO dto : specialHoursDTOList) {
-            // 確保每個 DTO 的 storeId 都與批次處理的 storeId 一致
-           
+		// 遍歷每個傳入的 DTO 進行處理
+		for (SpecialHoursDTO dto : specialHoursDTOList) {
+			// 確保每個 DTO 的 storeId 都與批次處理的 storeId 一致
 
-            // 1. 數據格式轉換與驗證
-            LocalDate parsedDate;
-            LocalTime parsedOpenTime = null;
-            LocalTime parsedCloseTime = null;
-            Boolean isClose = dto.getIsClose(); // 直接使用 Boolean 類型
+			// 1. 數據格式轉換與驗證
+			LocalDate parsedDate;
+			LocalTime parsedOpenTime = null;
+			LocalTime parsedCloseTime = null;
+			Boolean isClose = dto.getIsClose(); // 直接使用 Boolean 類型
 
-            try {
-                // 將日期字串轉換為 LocalDate
-                parsedDate = DatetimeConvert.parseLocalDate(dto.getDate(), SpecialHoursDTO.DATE_FORMAT);
-                
-                // 如果不是全日關閉，則轉換並驗證時間
-                if (isClose == null || !isClose) { // 注意 null 或 false 都表示需要時間
-                    parsedOpenTime = DatetimeConvert.parseLocalTime(dto.getOpenTime(), SpecialHoursDTO.TIME_FORMAT);
-                    parsedCloseTime = DatetimeConvert.parseLocalTime(dto.getCloseTime(), SpecialHoursDTO.TIME_FORMAT);
-                }
-            } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid date or time format for DTO (Date: " + dto.getDate() + ", OpenTime: " + dto.getOpenTime() + ", CloseTime: " + dto.getCloseTime() + "): " + e.getMessage());
-            } catch (NullPointerException e) { // 捕獲可能的 null 引用，例如 openTime/closeTime 是 null 但 isClose 是 false
-                throw new IllegalArgumentException("Missing open/close time for non-closed special hours: " + e.getMessage());
-            }
+			try {
+				// 將日期字串轉換為 LocalDate
+				parsedDate = DatetimeConvert.parseLocalDate(dto.getDate(), SpecialHoursDTO.DATE_FORMAT);
 
-            // 2. 業務邏輯驗證
-            if (isClose == null || !isClose) { // 如果不是全日關閉
-                if (parsedOpenTime == null || parsedCloseTime == null) {
-                    throw new IllegalArgumentException("Open and close times cannot be null if isClose is false for date: " + dto.getDate());
-                }
-                if (parsedCloseTime.isBefore(parsedOpenTime) || parsedCloseTime.equals(parsedOpenTime)) {
-                    throw new IllegalArgumentException("Close time must be strictly after open time for date: " + dto.getDate());
-                }
-            }
+				// 如果不是全日關閉，則轉換並驗證時間
+				if (isClose == null || !isClose) { // 注意 null 或 false 都表示需要時間
+					parsedOpenTime = DatetimeConvert.parseLocalTime(dto.getOpenTime(), SpecialHoursDTO.TIME_FORMAT);
+					parsedCloseTime = DatetimeConvert.parseLocalTime(dto.getCloseTime(), SpecialHoursDTO.TIME_FORMAT);
+				}
+			} catch (DateTimeParseException e) {
+				throw new IllegalArgumentException(
+						"Invalid date or time format for DTO (Date: " + dto.getDate() + ", OpenTime: "
+								+ dto.getOpenTime() + ", CloseTime: " + dto.getCloseTime() + "): " + e.getMessage());
+			} catch (NullPointerException e) { // 捕獲可能的 null 引用，例如 openTime/closeTime 是 null 但 isClose 是 false
+				throw new IllegalArgumentException(
+						"Missing open/close time for non-closed special hours: " + e.getMessage());
+			}
 
-            // (可選) 檢查日期是否為過去日期，是否允許設定
-            // if (parsedDate.isBefore(LocalDate.now())) {
-            //     throw new IllegalArgumentException("Cannot set special hours for past dates: " + dto.getDate());
-            // }
+			// 2. 業務邏輯驗證
+			if (isClose == null || !isClose) { // 如果不是全日關閉
+				if (parsedOpenTime == null || parsedCloseTime == null) {
+					throw new IllegalArgumentException(
+							"Open and close times cannot be null if isClose is false for date: " + dto.getDate());
+				}
+				if (parsedCloseTime.isBefore(parsedOpenTime) || parsedCloseTime.equals(parsedOpenTime)) {
+					throw new IllegalArgumentException(
+							"Close time must be strictly after open time for date: " + dto.getDate());
+				}
+			}
 
-           
+			// (可選) 檢查日期是否為過去日期，是否允許設定
+			// if (parsedDate.isBefore(LocalDate.now())) {
+			// throw new IllegalArgumentException("Cannot set special hours for past dates:
+			// " + dto.getDate());
+			// }
 
-            // 4. 創建新的 SpecialHoursBean 實體並保存
-            SpecialHoursBean newBean = new SpecialHoursBean();
-            // 對於新增操作，ID 應該為 null，讓資料庫自動生成
-            // newBean.setId(dto.getId()); // 如果 dto.getId() 有值，這裡可以考慮是否是更新而不是覆蓋
-                                        // 但在「覆蓋」邏輯下，通常是新生成 ID
-            newBean.setStore(store); // 設定關聯的 StoreBean 實體
-            newBean.setDate(parsedDate);
-            newBean.setOpenTime(parsedOpenTime);
-            newBean.setCloseTime(parsedCloseTime);
-            newBean.setIsClose(isClose);
+			// 4. 創建新的 SpecialHoursBean 實體並保存
+			SpecialHoursBean newBean = new SpecialHoursBean();
+			// 對於新增操作，ID 應該為 null，讓資料庫自動生成
+			// newBean.setId(dto.getId()); // 如果 dto.getId() 有值，這裡可以考慮是否是更新而不是覆蓋
+			// 但在「覆蓋」邏輯下，通常是新生成 ID
+			newBean.setStore(store); // 設定關聯的 StoreBean 實體
+			newBean.setDate(parsedDate);
+			newBean.setOpenTime(parsedOpenTime);
+			newBean.setCloseTime(parsedCloseTime);
+			newBean.setIsClose(isClose);
 
-            SpecialHoursBean savedBean = specialHoursRepository.save(newBean); // 保存到資料庫
+			SpecialHoursBean savedBean = specialHoursRepository.save(newBean); // 保存到資料庫
 
-            // 5. 將保存後的 Bean 轉換回 DTO，加入結果列表
-            savedResultList.add(SpecialHoursDTO.toDto(savedBean));
-        }
+			// 5. 將保存後的 Bean 轉換回 DTO，加入結果列表
+			savedResultList.add(SpecialHoursDTO.toDto(savedBean));
+		}
 
-        return savedResultList; // 返回所有成功保存的特殊營業時間 DTO 列表
-    } 
+		return savedResultList; // 返回所有成功保存的特殊營業時間 DTO 列表
+	}
 
-    /**
-     * 根據商店 ID 和日期查詢該商店的特殊營業時間列表。
-     *
-     * @param storeId 商店的 ID
-     * @param dateStr 日期字串 (例如 "yyyy-MM-dd")
-     * @return 該商店在指定日期的特殊營業時間列表
-     * @throws IllegalArgumentException 如果 storeId 或日期格式無效
-     */
-    public List<SpecialHoursDTO> getSpecialHoursByStoreId(Integer storeId) {
+	/**
+	 * 根據商店 ID 和日期查詢該商店的特殊營業時間列表。
+	 *
+	 * @param storeId 商店的 ID
+	 * @param dateStr 日期字串 (例如 "yyyy-MM-dd")
+	 * @return 該商店在指定日期的特殊營業時間列表
+	 * @throws IllegalArgumentException 如果 storeId 或日期格式無效
+	 */
+	public List<SpecialHoursDTO> getSpecialHoursByStoreId(Integer storeId) {
 
-        
-    	if(storeId != null) {
-        List<SpecialHoursBean> beans = specialHoursRepository.findByStoreId(storeId);
-        return beans.stream()
-                    .map(SpecialHoursDTO::toDto)
-                    .collect(Collectors.toList());
-    	}
-    	return null;
-    }
+		if (storeId != null) {
+			List<SpecialHoursBean> beans = specialHoursRepository.findByStoreId(storeId);
+			return beans.stream()
+					.map(SpecialHoursDTO::toDto)
+					.collect(Collectors.toList());
+		}
+		return null;
+	}
 
+	/**
+	 * 刪除指定 ID 的特殊營業時間記錄。
+	 *
+	 * @param id 要刪除的特殊營業時間記錄 ID
+	 * @throws IllegalArgumentException 如果 ID 為 null
+	 */
+	@Transactional
+	public void deleteById(Integer id) {
+		if (id != null && !specialHoursRepository.existsById(id)) {
+			// 如果嘗試刪除不存在的 ID，可以選擇拋出自定義異常或 IllegalArgumentException
+			throw new IllegalArgumentException("Special hour with ID " + id + " not found.");
+		}
+		specialHoursRepository.deleteById(id);
+	}
 
-    /**
-     * 刪除指定 ID 的特殊營業時間記錄。
-     *
-     * @param id 要刪除的特殊營業時間記錄 ID
-     * @throws IllegalArgumentException 如果 ID 為 null
-     */
-    @Transactional
-    public void deleteById(Integer id) {
-    	  if (id!=null &&!specialHoursRepository.existsById(id)) {
-              // 如果嘗試刪除不存在的 ID，可以選擇拋出自定義異常或 IllegalArgumentException
-              throw new IllegalArgumentException("Special hour with ID " + id + " not found.");
-          }
-          specialHoursRepository.deleteById(id);
-    } 
-    
-    
-    
-    
-    //--------------------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------------------
 	/**
 	 * 設定特殊休假日
 	 */

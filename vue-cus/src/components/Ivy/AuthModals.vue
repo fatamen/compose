@@ -55,10 +55,11 @@
         @close="step = ''" 
         @back="step = 'loginPassword'" />
     <!-- or step = 'loginEmail' 依你的流程-->
-    <ResetPasswordDialog 
-        v-if="showReset" 
-        @close="showReset = false" 
-        @submit="onResetPassword" />
+    <ResetPasswordDialog
+        v-if="showReset"
+        :token="token"
+        @close="showReset = false"
+        @submit="onResetPassword"/>
     <ResetSuccessModal 
         v-if="showSuccess"
         @close="closeSuccess"/>
@@ -83,10 +84,10 @@ const userStore = useUserStore();
 const router = useRouter()
 const route = useRoute()
 
-
 const step = ref('')            // 控制哪個modal開
 const showReset = ref(false)
 const showSuccess = ref(false)
+const token = ref('');
 
 //第一步
 function onGoogleLogin() {
@@ -145,8 +146,14 @@ function handleForgotSubmit(email) {
 
 function onResetPassword() {
     showReset.value = false
-    showSuccess.value = true // 顯示「密碼已更新」訊息
-    // 清掉 query string，避免重複再次觸發
+    showSuccess.value = true
+    // 這裡新增 SweetAlert
+    Swal.fire({
+        icon: 'success',
+        title: '密碼重設成功！',
+        text: '您可以使用新密碼登入了。',
+        confirmButtonText: '確定'
+    })
     router.replace({ path: '/', query: {} })
     userStore.syncFromStorage()
 }
@@ -163,7 +170,34 @@ defineExpose({
     // openLogin: () => { step.value = 'loginEmail' }
 })
 
+onMounted(() => {
+    if (route.path === '/search' && route.query.reset === '1') {
+        token.value = route.query.token || ''
+    if (!token.value) {
+    Swal.fire({
+        icon: 'error',
+        title: '錯誤',
+        text: '無效的重設密碼連結，請重新點擊電子郵件中的連結！',
+        confirmButtonText: '確定'
+        })
+        router.push('/')
+        return
+    }
+    showReset.value = true
+        // 清掉 query 但「props 傳給 Dialog」要用 token.value
+        router.replace({ path: '/search', query: {} })
+    }
+})
 
+watch(
+    () => route.query.token,
+    (token) => {
+        if (token) {
+        showReset.value = true
+        }
+    },
+    { immediate: true }
+)
 </script>
 <style >
     

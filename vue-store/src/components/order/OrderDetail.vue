@@ -114,7 +114,7 @@ watch(() => props.order, (newOrder) => {
       <!-- v-if="order.note" -->
       <div  class="mt-auto pt-3 border-top mb-3 p-3 bg-light rounded">
         <h6 class="mb-2 fw-bold">備註:</h6>
-        <p class="mb-0 text-muted small">麻煩多給我一副餐具{{ order.content }}</p>
+        <p class="mb-0 text-muted small">{{ order.content }}</p>
       </div>
 
     </div>
@@ -128,7 +128,7 @@ watch(() => props.order, (newOrder) => {
         <button v-if="order.status!='已取消' && order.status!='已完成' " class="btn btn-outline-danger w-100 py-3 rounded-pill fw-bold" @click="cancelOrder">取消訂單</button>
         <button v-if="order.status=='待確認'" class="btn btn-outline-primary w-100 py-3 rounded-pill fw-bold" @click="confirmOrder">確認訂單
         </button>
-        <button v-if="order.status=='準備中'" class="btn btn-outline-primary w-100 py-3 rounded-pill fw-bold" @click="completeOrder">完成訂單，代取餐
+        <button v-if="order.status=='準備中'" class="btn btn-outline-primary w-100 py-3 rounded-pill fw-bold" @click="completeOrder">完成訂單，等待取餐
         </button>
       </div>
     </div>

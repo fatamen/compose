@@ -1,13 +1,17 @@
     <template>
-        <div class="modal-bg" v-if="show">
-            <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-bg" v-if="show" @click="emit('close')">
+            <div class="modal-dialog modal-dialog-centered" @click.stop>
                 <div class="modal-content p-4">
                     <div class="modal-header border-0 pb-0">
-                        <h4 class="modal-title fw-bold">歡迎！</h4>
                         <button type="button" class="btn-close custom-close" @click="emit('close')"></button>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-2 text-start text-secondary">註冊或登入</div>
+                    <div class="modal-body d-flex flex-column align-items-center justify-content-center">
+                        <img 
+                        src="https://cdn-icons-png.flaticon.com/128/14036/14036306.png" 
+                        alt="歡迎" 
+                        style="width: 100px; height: 100px; display: block; margin-bottom: 20px;" 
+                        />
+                        <div class="mb-2 text-center text-secondary" style="font-size: 1.1rem;">註冊或登入</div>
                         <!-- Google 按鈕 -->
                         <!-- <button class="google-btn mb-3" @click="emit('google-login')">
                             <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google"
@@ -37,7 +41,7 @@ console.log('[RegisterModal loaded]')
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.08);
-    z-index: 900;
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -54,7 +58,8 @@ console.log('[RegisterModal loaded]')
 
 /* Modal框尺寸 */
 .modal-dialog {
-    width: 400px;
+    max-width: 400px;
+    width: 200vw;
     margin: 0 auto;
 }
 

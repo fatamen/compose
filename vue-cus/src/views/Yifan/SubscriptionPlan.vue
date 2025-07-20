@@ -96,7 +96,7 @@ const subscriptionPlans = reactive([
     {
         planId: 2,
         planName: '半年付方案',
-        planPrice: 1500,
+        planPrice: 500,
         validMonths: 6,
         isTrial: false,
         features: [

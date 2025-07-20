@@ -13,17 +13,6 @@
               <button class="btn-close" @click="cancel">✕</button>
             </div>
 
-            <!-- 手動輸入 -->
-            <div class="input-group mb-3">
-              <input
-                type="text"
-                class="form-control"
-                v-model="manualCode"
-                placeholder="輸入優惠碼"
-              />
-              <button class="btn btn-yellow" @click="applyManualCode">使用</button>
-            </div>
-
             <!-- Tabs -->
             <ul class="nav nav-tabs mb-3 justify-content-center">
               <li class="nav-item" v-for="tab in tabs" :key="tab.value">
@@ -36,6 +25,9 @@
                 </button>
               </li>
             </ul>
+
+
+
 
             <!-- 優惠券清單 -->
             <transition-group name="list-slide" tag="div" :key="activeTab">
@@ -51,6 +43,7 @@
                     <img :src="promotion.imageUrl" alt="icon" class="voucher-img" />
                   </div>
 
+
                   <!-- 中間內容 -->
                   <div class="voucher-content flex-grow-1">
                     <h5>{{ promotion.title }}</h5>
@@ -64,6 +57,7 @@
                       未達到最低消費門檻
                     </small>
                   </div>
+
 
                   <!-- 右側按鈕 -->
                   <div class="d-flex align-items-center ms-3">
@@ -79,6 +73,7 @@
               </div>
             </transition-group>
 
+
             <!-- 沒有資料時顯示 -->
             <div v-if="filteredPromotions.length === 0">
               <p class="text-muted text-center mt-4 fs-5">
@@ -93,8 +88,10 @@
   </Teleport>
 </template>
 
+
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+
 
 const props = defineProps({
   show: Boolean,
@@ -102,15 +99,29 @@ const props = defineProps({
   cartAmount: Number
 })
 
-const emits = defineEmits(['update:show', 'selected', 'applyCode'])
+
+const emits = defineEmits(['update:show', 'selected'])
+
+
+const filteredPromotions = computed(() => {
+  return activeTab.value === 'all'
+    ? props.promotions
+    : props.promotions.filter(p => p.type === activeTab.value)
+})
+
+
 
 const tabs = [
   { label: '全部', value: 'all', iconClass: 'fas fa-folder-open' },
   { label: '全平台', value: 'global', iconClass: 'fas fa-globe' },
   { label: '餐廳限定', value: 'restaurant', iconClass: 'fas fa-utensils' },
   { label: '餐點限定', value: 'food', iconClass: 'fas fa-hamburger' },
-  { label: '會員限定', value: 'member', iconClass: 'fas fa-crown' }
+  // { label: '會員限定', value: 'member', iconClass: 'fas fa-crown' }
 ]
+const activeTab = ref('all')
+
+
+
 
 const getDiscountText = (p) => {
   if (p.discountType === 'amount') return `滿 $ ${p.minSpend} 折 ${p.discountValue} 元`
@@ -118,42 +129,51 @@ const getDiscountText = (p) => {
   return '優惠活動'
 }
 
+
 const formatDate = (datetimeStr) => {
   const date = new Date(datetimeStr)
   return isNaN(date) ? '格式錯誤' : `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`
 }
 
-const activeTab = ref('all')
-const manualCode = ref('')
 
-const filteredPromotions = computed(() => {
-  if (activeTab.value === 'all') return props.promotions
-  return props.promotions.filter(p => p.types?.includes(activeTab.value))
-})
+
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    manualCode.value = ''
+    setTimeout(() => {
+      document.querySelectorAll('[aria-hidden="true"]').forEach(el => {
+        el.removeAttribute('aria-hidden')
+      })
+    }, 50)
     activeTab.value = 'all'
   }
 })
 
+
+
+
+
+
+watch(() => props.promotions, (val) => {
+  console.log('🧾 傳入的優惠券資料：', val)
+})
+
+
 const selectPromotion = (promotion) => {
   emits('selected', promotion)
+  //函數名稱 selected
+  //promotion 傳入的參數
   emits('update:show', false)
 }
 
+
 const cancel = () => emits('update:show', false)
 
-const applyManualCode = () => {
-  if (manualCode.value.trim()) {
-    emits('applyCode', manualCode.value.trim())
-    manualCode.value = ''
-  } else {
-    alert('請輸入優惠碼')
-  }
-}
+
+
+
 </script>
+
 
 <style scoped>
 .overlay {
@@ -163,19 +183,21 @@ const applyManualCode = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 5000;
 }
+
 
 .popup-box {
   background: #fff;
   width: 100%;
-  max-width: 700px;
+  max-width: 600px;
   border-radius: 12px;
   padding: 20px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
+
 
 .popup-header {
   color: #5f3300;
@@ -185,6 +207,7 @@ const applyManualCode = () => {
   margin-bottom: 20px;
 }
 
+
 .btn-close {
   background: none;
   border: none;
@@ -192,9 +215,11 @@ const applyManualCode = () => {
   cursor: pointer;
 }
 
+
 .nav-tabs {
   border-bottom: 2px solid #a06d50;
 }
+
 
 .nav-tabs .nav-link {
   width: 130px;
@@ -205,6 +230,7 @@ const applyManualCode = () => {
   transition: all 0.3s ease;
 }
 
+
 .nav-tabs .nav-link:hover {
   background-color: #fff3cd;
   color: #a06d50;
@@ -214,12 +240,14 @@ const applyManualCode = () => {
   cursor: pointer;
 }
 
+
 .nav-tabs .nav-link.active {
   background-color: #a06d50;
   color: white;
   font-weight: bold;
   border-color: #ffc94d #ffc94d #fff;
 }
+
 
 .voucher-card {
   position: relative;
@@ -230,12 +258,14 @@ const applyManualCode = () => {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
+
 .voucher-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   cursor: pointer;
 }
+
 
 .voucher-left {
   width: 100px;
@@ -245,15 +275,18 @@ const applyManualCode = () => {
   flex-shrink: 0;
 }
 
+
 .voucher-img {
   width: 120px;
   object-fit: contain;
 }
 
+
 .voucher-content {
   padding-left: 20px;
   line-height: 0.5;
 }
+
 
 .btn-yellow {
   background-color: #ffc94d;
@@ -264,10 +297,12 @@ const applyManualCode = () => {
   padding: 6px 16px;
 }
 
+
 .btn-yellow:hover {
   background-color: #f7ba1e;
   color: #5f3300;
 }
+
 
 /* 進出動畫 */
 .fade-enter-active,
@@ -279,6 +314,7 @@ const applyManualCode = () => {
   opacity: 0;
 }
 
+
 .popup-enter-active,
 .popup-leave-active {
   transition: transform 0.3s;
@@ -287,6 +323,7 @@ const applyManualCode = () => {
 .popup-leave-to {
   transform: scale(0.8);
 }
+
 
 /* 券卡片滑動動畫 */
 .list-slide-enter-from {
@@ -300,7 +337,8 @@ const applyManualCode = () => {
   opacity: 0;
   transform: translateY(-20px);
 }
-.list-slide-leave-active {
+  .list-slide-leave-active {
   transition: all 0.3s ease;
 }
 </style>
+

@@ -11,10 +11,6 @@ import tw.com.ispan.eeit.model.entity.store.StoreBean;
 @Data
 @NoArgsConstructor
 public class OpenHourDTO {
-
-    // 時間格式定義，與資料庫的 TIME(0) 匹配
-    private static final String TIME_FORMAT = "HH:mm";
-
     private Integer id;
     private Integer storeId;
     private DayOfWeek dayOfWeek;
@@ -71,8 +67,20 @@ public class OpenHourDTO {
                 return dayOfWeek.toString();
         }
     }
-    
-    
+
+    public static OpenHourDTO fromEntity(OpenHourBean openHour) {
+        if (openHour == null) {
+            return null;
+        }
+        OpenHourDTO dto = new OpenHourDTO();
+        dto.setId(openHour.getId());
+        dto.setStoreId(openHour.getStore().getId());
+        dto.setDayOfWeek(openHour.getDayOfWeek());
+        dto.setOpenTime(openHour.getOpenTime());
+        dto.setCloseTime(openHour.getCloseTime());
+        return dto;
+    }
+
     public static OpenHourDTO toDto(OpenHourBean bean) {
         if (bean == null) {
             return null;
@@ -92,20 +100,21 @@ public class OpenHourDTO {
      * 將 OpenHourDTO 轉換為 OpenHourBean。
      * 注意：此方法需要一個 StoreBean 物件，因為 OpenHourBean 實際關聯的是 StoreBean 實例，
      * 而 DTO 只包含 storeId。在實際應用中，你可能需要從資料庫或其他地方根據 storeId 獲取 StoreBean。
-     * @param dto 要轉換的 OpenHourDTO 物件
+     * 
+     * @param dto       要轉換的 OpenHourDTO 物件
      * @param storeBean 關聯的 StoreBean 物件，必須提供
      * @return 轉換後的 OpenHourBean 物件
      * @throws IllegalArgumentException 如果 storeBean 為 null
      */
-    public static OpenHourBean toBean (OpenHourDTO dto) {
+    public static OpenHourBean toBean(OpenHourDTO dto) {
         if (dto == null) {
             return null;
         }
         StoreBean storeBean = new StoreBean();
-        
+
         OpenHourBean bean = new OpenHourBean();
         bean.setId(dto.getId()); // 如果是新增，id 可能為 null，由資料庫生成
-     // 設定關聯的 StoreBean 物件
+        // 設定關聯的 StoreBean 物件
         storeBean.setId(dto.getStoreId());
         bean.setStore(storeBean);
 
@@ -113,7 +122,7 @@ public class OpenHourDTO {
         bean.setDayOfWeek(dto.getDayOfWeek());
 
         // 判斷 isOpen 狀態並設定 openTime 和 closeTime
-//        設定時間
+        // 設定時間
 
         if (dto.getIsOpen() != null && dto.getIsOpen()) {
             // 如果 isOpen 為 true，則解析時間字串
@@ -127,6 +136,4 @@ public class OpenHourDTO {
         }
         return bean;
     }
-   
-   
 }

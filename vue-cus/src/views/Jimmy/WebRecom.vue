@@ -52,13 +52,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
+import axios from '@/plungins/axios.js';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 
 // API 基礎 URL
-const API_URL = import.meta.env.VITE_RECOM_URL;
+// const API_URL = import.meta.env.VITE_RECOM_URL;
 
 // 狀態管理
 const tags = ref([]);
@@ -79,7 +79,7 @@ const displayedTags = computed(() => {
 // 獲取所有標籤
 const fetchTags = async () => {
     try {
-        const response = await axios.get(API_URL);
+        const response = await axios.get('/api/web-recom');
         tags.value = response.data;
         tempOrder.value = []; // 重置臨時排序
     } catch (error) {
@@ -114,7 +114,7 @@ const saveSortOrder = async () => {
             ...tag,
             prime: index + 1
         }));
-        await axios.post(`${API_URL}/batch-update`, updatedTags);
+        await axios.post(`/api/web-recom/batch-update`, updatedTags);
         tags.value = updatedTags;
         tempOrder.value = [];
         errorMessage.value = '排序已保存';
@@ -127,10 +127,10 @@ const saveSortOrder = async () => {
 const saveTag = async () => {
     try {
         if (editMode.value) {
-            await axios.put(`${API_URL}/${newTag.value.id}`, newTag.value);
+            await axios.put(`/api/web-recom/${newTag.value.id}`, newTag.value);
         } else {
             const maxPrime = Math.max(...tags.value.map(t => t.prime || 0), 0);
-            await axios.post(API_URL, { ...newTag.value, prime: maxPrime + 1 });
+            await axios.post('/api/web-recom', { ...newTag.value, prime: maxPrime + 1 });
         }
         newTag.value = { tag: '' };
         editMode.value = false;
@@ -158,7 +158,7 @@ const cancelEdit = () => {
 const deleteTag = async (id) => {
     if (confirm('確定要刪除此標籤嗎？')) {
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            await axios.delete(`/api/web-recom/${id}`);
             await fetchTags();
             errorMessage.value = '';
         } catch (error) {

@@ -26,6 +26,7 @@ class ReservationService {
             }
 
             const response = await axios.get(`${API_BASE}/store/${storeId}?${params}`);
+            console.log('API 回應:', response.data);
             return response.data;
         } catch (error) {
             console.error('取得訂位列表失敗:', error);
@@ -340,6 +341,7 @@ class ReservationService {
              */
             async getTimeSetting(storeId) {
                 try {
+                    console.log('storeId', storeId);
                     const response = await axios.get(`/api/time-setting/${storeId}`);
                     return response.data;
                 } catch (error) {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import reservationService from '../../services/reservationService.js';
 
 // Props
@@ -26,6 +26,12 @@ const selectedPeriod = ref('week'); // week, month, year
 
 // 載入統計資料
 const fetchStats = async () => {
+    // 檢查 storeId 是否有效
+    if (!props.storeId) {
+        console.log('storeId 為空，跳過載入統計資料');
+        return;
+    }
+
     loading.value = true;
     try {
         // 嘗試使用真實API
@@ -78,9 +84,17 @@ const getStatusIcon = (status) => {
     return iconMap[status] || 'fas fa-question-circle';
 };
 
+// 監聽 storeId 變化
+watch(() => props.storeId, (newStoreId) => {
+    if (newStoreId) {
+        console.log('storeId 已更新，重新載入統計資料:', newStoreId);
+        fetchStats();
+    }
+}, { immediate: true });
+
 // 頁面載入時取得資料
 onMounted(() => {
-    fetchStats();
+    // fetchStats() 已經在 watch 的 immediate: true 中調用了
 });
 </script>
 

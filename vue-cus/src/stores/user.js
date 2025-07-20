@@ -58,6 +58,8 @@ export const useUserStore = defineStore('user', function () {
     }
 
     function loginSuccess(data) {
+        console.log('data',data);
+        console.log('phone',data.phone);
         fullName.value = data.fullName || '';
         userId.value = data.userId || '';
         email.value = data.email || '';

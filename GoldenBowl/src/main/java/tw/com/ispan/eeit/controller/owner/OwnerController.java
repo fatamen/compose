@@ -20,11 +20,10 @@ import tw.com.ispan.eeit.service.OwnerService;
 @RestController
 @RequestMapping("/api/owner")
 public class OwnerController {
-	@Autowired
-	private OwnerService ownerService;
-	
+    @Autowired
+    private OwnerService ownerService;
 
-// 查詢全部（Read All）
+    // 查詢全部（Read All）
     @GetMapping
     public List<OwnerBean> findAll() {
         return ownerService.findAll();
@@ -34,7 +33,8 @@ public class OwnerController {
     @GetMapping("/{id}")
     public Map<String, Object> findById(@PathVariable Integer id) {
         OwnerBean bean = ownerService.findById(id);
-        if (bean == null) return Map.of("success", false, "message", "找不到此帳號");
+        if (bean == null)
+            return Map.of("success", false, "message", "找不到此帳號");
         OwnerDTO dto = ownerService.toDTO(bean);
         return Map.of("success", true, "owner", dto);
     }
@@ -46,7 +46,6 @@ public class OwnerController {
         return Map.of("exists", exists);
     }
 
-    // 註冊（Create）
     @PostMapping("/register")
     public Map<String, Object> register(@RequestBody Map<String, String> map) {
         String email = map.get("email");
@@ -60,27 +59,24 @@ public class OwnerController {
         return Map.of("success", true, "ownerId", owner.getId());
     }
 
-    // 登入
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody Map<String, String> map) {
         String email = map.get("email");
         String pwd = map.get("password");
-        System.out.println("login email: " + email + ", pwd: " + pwd);
         OwnerBean owner = ownerService.findByEmailAndPassword(email, pwd);
         if (owner == null) {
-            System.out.println("login fail");
             return Map.of("success", false, "message", "帳號或密碼錯誤");
         }
         // 把所需欄位全部回傳
         return Map.of(
-            "success", true,
-            "ownerId", owner.getId(),
-            "name", owner.getName(),
-            "email", owner.getEmail(),
-            "phone", owner.getPhone(),
-            "lastLogin", owner.getLastLogin()
-        );
+                "success", true,
+                "ownerId", owner.getId(),
+                "name", owner.getName(),
+                "email", owner.getEmail(),
+                "phone", owner.getPhone(),
+                "lastLogin", owner.getLastLogin());
     }
+
     // 修改（Update）
     @PutMapping("/{id}")
     public Map<String, Object> update(@PathVariable Integer id, @RequestBody Map<String, String> map) {

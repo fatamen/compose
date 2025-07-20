@@ -1,7 +1,7 @@
 <template>
     <!-- 有改過 -->
-    <div class="modal-bg" v-if="show">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-bg" v-if="show" @click="emit('close')">
+        <div class="modal-dialog modal-dialog-centered" @click.stop>
             <div class="modal-content p-4">
                 <div class="modal-header border-0 pb-0 justify-content-between">
                     <button class="btn nav-btn" @click="emit('back')">
@@ -13,7 +13,7 @@
                     <button type="button" class="btn-close custom-close" @click="emit('close')"></button>
                 </div>
                 <div class="modal-body d-flex flex-column align-items-center pt-0">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3524/3524622.png" alt="lock" class="icon-img mb-3">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1745/1745318.png" alt="lock" class="icon-img mb-3">
                     <div class="fw-bold title mb-2">忘記密碼了嗎？</div>
                     <div class="desc mb-3">輸入你的email，我們發送重設密碼連結</div>
                     <form class="w-100" @submit.prevent="onSubmit">

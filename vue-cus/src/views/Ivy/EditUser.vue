@@ -201,7 +201,7 @@ import Swal from 'sweetalert2'
             title: '更新成功！', // 標題
             text: '您的資料已成功更新。', // 內容文字
             showConfirmButton: false, // 不顯示確認按鈕
-            timer: 1500, // 1.5 秒後自動關閉
+            timer: 500, // 1.5 秒後自動關閉
             timerProgressBar: true // 顯示進度條
         });
     } catch {

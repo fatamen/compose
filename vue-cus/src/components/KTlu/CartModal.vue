@@ -21,7 +21,7 @@
                             <div class="restaurant-info">
                                 <router-link :to="`/restaurant/${ restaurantId }`">
                                 <img :src="restaurantCart.restaurant.image" :alt="restaurantCart.restaurant.name"
-                                    class="restaurant-image" />
+                                    class="restaurant-image" @click="closeModal"/>
                                 </router-link>    
                                 <div class="restaurant-details">
                                     <h5 class="restaurant-name">{{ restaurantCart.restaurant.name }}</h5>
@@ -43,7 +43,7 @@
                         <div class="restaurant-items">
                             <div v-for="item in restaurantCart.items" :key="item.id" class="cart-item">
                                 <div class="item-image">
-                                    <img :src="item.image" :alt="item.name" />
+                                    <img :src="item.food.imgResource" :alt="item.name" />
                                 </div>
 
                                 <div class="item-details">
@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed ,onMounted } from 'vue'
 import '@/assets/css/restaurant-theme.css'
 
 const props = defineProps({
@@ -135,6 +135,8 @@ const totalItems = computed(() => {
         return total + restaurantCart.items.reduce((sum, item) => sum + item.quantity, 0)
     }, 0)
 })
+
+
 
 const restaurantCount = computed(() => {
     return Object.keys(props.cartByRestaurant).length
@@ -192,7 +194,9 @@ const formatOptions = (optionValue) => {
     }
     return optionValue
 }
-
+onMounted(() => {
+    console.log('cartByRestaurant', props.cartByRestaurant)
+})
 
 
 </script>

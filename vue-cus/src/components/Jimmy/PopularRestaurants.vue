@@ -3,22 +3,22 @@
     <h2>附近熱門美食</h2>
     <div class="restaurant-scroll">
       <div class="restaurant-card" v-for="restaurant in restaurants" :key="restaurant.id">
-        <img 
-          :src="getMainImage(restaurant)" 
-          :alt="restaurant.name"
-          @click="navigateToRestaurant(restaurant.id)" 
-          @error="handleImageError"
-          style="cursor: pointer;" 
+        <img
+          :src="restaurant.photo || '/path/to/default-popular-image.jpg'" :alt="restaurant.name"
+          @click="navigateToRestaurant(restaurant.id)"
+          style="cursor: pointer;"
         />
         <div class="info">
           <h3>
             {{ restaurant.name }} {{ restaurant.score ? restaurant.score.toFixed(1) : 'N/A' }}★
           </h3>
-          <p class="comment-and-distance-group"> <span class="comment-trigger-text" @click="openCommentModal(restaurant.id)" style="cursor: pointer;">
+          <p class="comment-and-distance-group">
+            <span class="comment-trigger-text" @click="openCommentModal(restaurant.id)" style="cursor: pointer;">
               ({{ restaurant.comments ? restaurant.comments.length : 0 }} 則評論)
             </span>
             <span v-if="restaurant.distanceInKilometers" class="distance-text">
-              • {{ restaurant.distanceInKilometers.toFixed(2) }} km </span>
+              • {{ restaurant.distanceInKilometers.toFixed(2) }} km
+            </span>
           </p>
         </div>
       </div>
@@ -37,34 +37,33 @@
     v-if="showCommentModal"
     :storeId="selectedStoreId"
     @close="showCommentModal = false"
-  />
+    @comments-data-changed="handleCommentsDataChanged" />
 </template>
 
 <script setup>
-import { ref} from 'vue'; // 引入 ref
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import CommentModal from '@/components/Jimmy/Comment.vue'; // <-- 新增這一行
+import CommentModal from '@/components/Jimmy/Comment.vue';
 import { useLocationStore } from '@/stores/location';
-import { useImageUrl } from '@/composables/useImageUrl.js'
 
-// 🔥 新增：使用圖片處理邏輯
-const { getImageUrl, defaultPhoto } = useImageUrl();
+// 聲明會發出的事件
+const emit = defineEmits(['comments-data-changed']); // **新增這行**
 
 // 定義 Props
-const props = defineProps({  
-  restaurants: { // 這個 props 現在預期接收的是 Home.vue 轉換後的餐廳數據
+const props = defineProps({
+  restaurants: {
     type: Array,
     required: true,
     default: () => [],
   },
 });
 
-const router = useRouter(); // 初始化 useRouter
-const locationStore = useLocationStore(); 
+const router = useRouter();
+const locationStore = useLocationStore();
 
 // 控制評論模態框顯示的狀態
 const showCommentModal = ref(false);
-const selectedStoreId = ref(null); // 用於儲存當前點擊的餐廳 ID
+const selectedStoreId = ref(null);
 
 // 定義導航方法
 const navigateToRestaurant = (id) => {
@@ -77,31 +76,16 @@ const openCommentModal = (storeId) => {
   showCommentModal.value = true;
 };
 
-// 🔥 新增：處理餐廳圖片的函數
-const getMainImage = (restaurant) => {
-    // 如果沒有 photo 資料，回傳預設圖片
-    if (!restaurant.photo) {
-        return defaultPhoto;
-    }
-    
-    // 如果 photo 是字串且包含分號（多張圖片），取第一張
-    if (typeof restaurant.photo === 'string' && restaurant.photo.includes(';')) {
-        const firstImage = restaurant.photo.split(';')[0].trim();
-        return getImageUrl(firstImage);
-    }
-    
-    // 如果是單張圖片
-    return getImageUrl(restaurant.photo);
-};
-
-// 🔥 新增：圖片載入錯誤處理
-const handleImageError = (event) => {
-    console.warn('餐廳 Banner 圖片載入失敗，使用預設圖片:', event.target.src);
-    event.target.src = defaultPhoto;
+// **處理 CommentModal 發出的 comments-data-changed 事件**
+// 這個函數會將事件繼續向上層傳遞給 Home.vue
+const handleCommentsDataChanged = (payload) => {
+  console.log('PopularRestaurants.vue: 接收到 CommentModal 的 comments-data-changed 事件，並向上層傳遞。', payload);
+  emit('comments-data-changed', payload); // **向上層組件 Home.vue 傳遞事件**
 };
 </script>
 
 <style scoped>
+/* 樣式保持不變 */
 .popular-section {
   padding: 10px;
   background-color: #fff;
@@ -112,7 +96,7 @@ const handleImageError = (event) => {
 
 .popular-section h2 {
   font-size: 23px;
-  font-weight: bold; 
+  font-weight: bold;
   margin-bottom: 15px;
   color: #333;
 }
@@ -173,7 +157,7 @@ const handleImageError = (event) => {
 }
 
 .restaurant-card h3 {
-  font-weight: bold; 
+  font-weight: bold;
   font-size: 16px;
   margin-top: 5px; /* 調整標題上邊距 */
   margin-bottom: 5px;

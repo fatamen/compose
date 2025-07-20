@@ -47,6 +47,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user.js';
+import Swal from 'sweetalert2'
 
 const showDropdown = ref(false);
 const router = useRouter();
@@ -68,9 +69,19 @@ const navigateTo = (path) => {
 };
 
 // 登出邏輯
-const logout = () => {
+const logout = async () => {
   userStore.logout();
   showDropdown.value = false;
+  await Swal.fire({
+    icon: 'success',
+    title: '已成功登出',
+    text: '期待下次再見！',
+    showConfirmButton: false,
+    timer: 500, //0720 1500->500
+    timerProgressBar: true,
+    position: 'center',
+    background: 'white'
+  });
   router.push('/search');
 };
 

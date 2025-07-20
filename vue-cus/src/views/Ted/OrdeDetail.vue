@@ -100,8 +100,8 @@ onMounted(() => {
               <h5 class="card-title fw-bold"  v-if="order.status !== 'completed' && order.status !== 'canceled'">最新訂購</h5>
               <h5 class="card-title fw-bold"  v-else>訂單記錄</h5>
               <p class="text-muted small">
-                
-                <a href="#" class="text-decoration-none" style="color: #e20261;">歷史訂單</a> &gt; <a href="#" class="text-decoration-none" style="color: #e20261;">訂單詳情</a>
+                <router-link :to="`/OrderList`">
+                <span href="#" class="text-decoration-none" style="color: #e20261;">歷史訂單</span></router-link> &gt; <a href="#" class="text-decoration-none" style="color: #e20261;">訂單詳情</a>
               </p>
 
               <div class="d-flex align-items-center mb-3">
@@ -157,7 +157,7 @@ onMounted(() => {
             <div class="card-body">
               <h5 class="card-title fw-bold">付款方式</h5>
               <div class="d-flex justify-content-between mb-2">
-                <span>信用卡</span>
+                <span>{{order.method}}</span>
                 <!-- <span>NT$ {{ order.payment.creditCard.toFixed(0) }}</span> -->
               </div>
              
@@ -167,6 +167,14 @@ onMounted(() => {
 
         <!-- 右側內容區 -->
         <div class="col-lg-4">
+          <div  class="card shadow-sm mb-4 rounded-lg">
+              <div class="card-body">
+                <h5 class="card-title fw-bold">訂單備註</h5>
+                <p class="mb-0">{{ order.content||'無' }}</p>
+              </div>
+          </div>
+
+
           <div class="card shadow-sm mb-4 rounded-lg">
             <div class="card-body">
               <h5 class="card-title fw-bold">再次訂購</h5>

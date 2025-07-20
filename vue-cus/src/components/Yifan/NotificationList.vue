@@ -1,174 +1,124 @@
 <template>
-  <div class="notification-panel" v-show="visible">
-    <!-- 🔺 小箭頭 -->
-    <div class="arrow-up"></div>
+  <div class="notification-panel">
+    <div class="panel-header">
+      <i class="bi bi-megaphone-fill me-2"></i>最近優惠通知
+    </div>
 
-    <!-- 通知標題 -->
-    <div class="notification-header">最近優惠通知</div>
-
-    <!-- 通知清單 -->
-    <ul class="notification-list">
+    <ul class="notification-ul">
       <li
-        v-for="item in notifications"
+        v-for="item in sortedNotifications"
         :key="item.id"
-        :class="{ unread: !item.is_read }"
-        class="notification-item d-flex justify-content-between align-items-start"
+        :class="{ 'unread': !item.isRead }"
+        @click="handleItemClick(item)"
       >
-        <!-- 左側通知內容 -->
-        <div class="left-content">
-          <div class="title">{{ item.title }}</div>
-          <div class="date">{{ item.date }}</div>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="promotion-title">{{ item.promotionTitle }}</span>
+          <span v-if="!item.isRead" class="badge bg-danger">未讀</span>
         </div>
-
-        <!-- 右側按鈕 -->
-        <button class="view-btn" @click="markAsRead(item)">瀏覽</button>
+        <div class="promotion-dates">活動時間：<br>
+          {{ item.promotionStartTimeStr }} ~ {{ item.promotionEndTimeStr }}
+        </div>
       </li>
     </ul>
 
-    <!-- 查看全部 -->
-    <div class="see-all">查看全部</div>
+
+    <!-- 已讀 -->
+    <div class="text-center" style="padding: 10px 0; font-weight: normal;background-color: white;">
+      <a
+        href="#"
+        class="text-decoration-none small"
+        style="color: #f9a825;"
+        @click.prevent="emit('mark-all-as-read')"
+      >
+        全部標示為已讀
+      </a>
+    </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
-  visible: Boolean,
+import { ref, defineEmits, computed } from 'vue';
+
+const showAll = ref(false)
+
+const props = defineProps({
   notifications: Array
 });
-const emit = defineEmits(['mark-as-read']);
-const markAsRead = (item) => {
-  if (!item.is_read) {
+
+const emit = defineEmits(['mark-as-read', 'mark-all-as-read']);
+
+const handleItemClick = (item) => {
+  if (!item.isRead) {
     emit('mark-as-read', item);
   }
 };
+
+//  按 createdTime 做降冪排序（新通知排最上）
+const sortedNotifications = computed(() => {
+  return [...props.notifications].sort((a, b) => {
+    return new Date(b.createdTime) - new Date(a.createdTime);
+  });
+})
 </script>
 
 <style scoped>
-/* 通知面板樣式 */
 .notification-panel {
-  position: fixed;
-  top: 70px; /* 根據 bell icon 高度微調 */
-  right: 20px;
-  width: 320px;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 999;
-  overflow: hidden;
-  font-size: 14px;
-}
-
-/* 小箭頭樣式 */
-.arrow-up {
   position: absolute;
-  top: -10px;
-  right: 30px; /* 請依 bell icon 水平位置微調 */
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 10px solid white;
+  top: 92%;
+  right: calc(50% - 160px);
+  width: 320px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
 }
 
-/* 標題區塊 */
-.notification-header {
-  background: white;
-  color: #ffc94d; /* 主色 */
-  padding: 12px 16px;
+.panel-header {
   font-weight: bold;
   font-size: 16px;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  border-bottom: 1px solid #eee;
+  color: white; /* 標題 */
+  margin-bottom: 12px;
+  background-color: #a06d50;
+  padding: 10px 14px;
+  margin-bottom: 0px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
 }
 
-/* 通知內容 */
-.notification-list {
-  max-height: 280px;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
+.notification-ul {
+  padding-left: 0;
   list-style: none;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 0;
+  background-color: white;
+  
 }
 
-
-.notification-list li {
-  padding: 10px;
+.notification-ul li {
+  padding: 10px 8px;
   border-bottom: 1px solid #eee;
-}
-
-.notification-list li.unread {
-  background-color: #fff9e6; /* 淺黃色背景 */
-  font-weight: bold;
-}
-
-.notification-list .title {
-  margin-bottom: 4px;
-}
-
-.notification-list .date {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 4px;
-}
-
-/* 每則通知 */
-.notification-item {
+  cursor: pointer;
+  background-color: white; /* 已讀預設為白底 */
   padding: 12px;
-  border-bottom: 1px solid #eee;
 }
 
-.notification-item.unread {
-  background-color: #fff9e6;
-  font-weight: bold;
+.notification-ul li.unread {
+  background-color: #fff8e1; /* 未讀為淺黃色 */
 }
 
-.notification-item:hover {
-  background-color: #fef7dc;
+/* 標題為黑色 */
+.promotion-title {
+  color: #212529;
+  font-weight:bold;
 }
 
-.left-content {
-  flex: 1;
-  padding-right: 12px;
-}
-
-.title {
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 4px;
-  word-break: break-word;
-}
-
-.date {
+/* 時間文字為灰色 */
+.promotion-dates {
+  color: #9d9d9d;
+  font-weight:bold ;
   font-size: 12px;
-  color: #888;
 }
 
-/* 查看按鈕 */
-.view-btn {
-  background-color: #ffc94d;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  margin-left: 12px;
-}
-
-.view-btn:hover {
-  background-color: #e5b53f;
-}
-
-/* 查看全部連結 */
-.see-all {
-  text-align: center;
-  padding: 8px;
-  font-size: 13px;
-  color: #555;
-  cursor: pointer;
-  border-top: 1px solid #eee;
-}
 </style>
