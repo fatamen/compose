@@ -29,7 +29,7 @@ onMounted(async () => {
     try {
         // 使用我們統一的 /api/stores 路徑
          
-        const response = await apiClient.get(`/api/stores/${route.params.id}`);
+        const response = await apiClient.get(`/stores/${route.params.id}`);
         restaurantData.value = response.data;
     } catch (e) {
         console.error("獲取店家資料失敗:", e);

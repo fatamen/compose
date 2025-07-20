@@ -5,7 +5,7 @@ export const fetchStoreHours = async (storeId) => {
     try {
         console.log('fetchStoreHours - 餐廳ID:', storeId)
 
-        const response = await axios.get(`/api/stores/${storeId}/hours`)
+        const response = await axios.get(`/stores/${storeId}/hours`)
 
         console.log('fetchStoreHours - API 響應狀態:', response.status)
         console.log('fetchStoreHours - API 響應數據:', response.data)

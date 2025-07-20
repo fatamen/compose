@@ -353,7 +353,7 @@ const shwoOpenTime = ref('');
 const showCloseTime = ref('');
 // todayOpenHourText.value = findOpenHour(props.restId);
 const findOpenHour=(id)=>{
-  axios.get(`/api/stores/${id}/hours/todayOpenHour`).then((response) => {
+  axios.get(`/stores/${id}/hours/todayOpenHour`).then((response) => {
     const openHour = response.data;
     
     console.log('營業時間',openHour);

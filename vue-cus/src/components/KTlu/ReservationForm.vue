@@ -329,7 +329,7 @@ const isSpecialClosedDay = async (date) => {
         console.log('檢查特殊營業時間，日期:', dateString)
 
         // 調用後端 API 檢查特殊營業時間
-        const response = await fetch(`/api/stores/${props.restaurantId}/special/check/${dateString}`)
+        const response = await fetch(`/stores/${props.restaurantId}/special/check/${dateString}`)
 
         if (response.ok) {
             const data = await response.json()

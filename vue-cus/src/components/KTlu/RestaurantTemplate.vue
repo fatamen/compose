@@ -135,7 +135,7 @@ const fetchBusinessHours = async () => {
         console.log('正在獲取餐廳營業時間，餐廳ID:', props.restaurant.id)
 
         // 使用完整營業時間 API
-        const response = await apiClient.get(`/api/stores/${props.restaurant.id}/hours/complete`)
+        const response = await apiClient.get(`/stores/${props.restaurant.id}/hours/complete`)
 
         console.log('營業時間資料:', response.data)
         businessHours.value = response.data
@@ -147,7 +147,7 @@ const fetchBusinessHours = async () => {
         // 如果 API 失敗，嘗試使用基本營業時間 API
         try {
             console.log('嘗試使用基本營業時間 API')
-            const basicResponse = await apiClient.get(`/api/stores/${props.restaurant.id}/hours`)
+            const basicResponse = await apiClient.get(`/stores/${props.restaurant.id}/hours`)
             businessHours.value = basicResponse.data
         } catch (basicError) {
             console.error('基本營業時間 API 也失敗:', basicError)

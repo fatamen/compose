@@ -223,7 +223,7 @@ const loadRecords = async () => {
 // 根據餐廳 ID 獲取餐廳名稱
 const getStoreName = async (storeId) => {
     try {
-        const response = await fetch(`/api/stores/${storeId}`)
+        const response = await fetch(`/stores/${storeId}`)
         if (response.ok) {
             const store = await response.json()
             return store.name || '未知餐廳'
