@@ -91,7 +91,8 @@
     loading.value = true;
     try {
       // 假設您的後端 API 支援按 storeId 過濾評論
-      const response = await axios.get(`http://localhost:8080/comment/store/${props.storeId}`);
+      // const response = await axios.get(`http://localhost:8080/comment/store/${props.storeId}`);
+      const response = await axios.get(`/api/comment/store/${props.storeId}`);
       comments.value = response.data;
   
       // 為了顯示使用者名稱，這裡假設 CommentBean 有一個關聯的 UserBean，且 UserBean 有一個 name 屬性。
