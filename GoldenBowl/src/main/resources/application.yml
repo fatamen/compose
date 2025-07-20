@@ -17,11 +17,10 @@ spring:
   #設定資料庫執行環境
   datasource:
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
-    # url: jdbc:sqlserver://192.168.36.81:5433;database=java;trustServerCertificate=true
-    url: jdbc:sqlserver://localhost:1433;database=back2;trustServerCertificate=true
-    # url: jdbc:sqlserver://localhost:1433;database=back;trustServerCertificate=true
-    username: sa
-    password: P@ssw0rd
+    # 將這裡的 url、username 和 password 改為使用環境變數
+    url: jdbc:sqlserver://${DB_HOST}:${DB_PORT};database=${DB_NAME};trustServerCertificate=true
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
 
   # 設定JPA
   jpa:
@@ -37,11 +36,11 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         #連結資料庫讓名稱與java相同
   #mogodb的設定
-  #  data:
-  #    mongodb:
-  #      host: localhost
-  #      port: 27017
-  #      database: textdb
+  #   data:
+  #     mongodb:
+  #       host: localhost
+  #       port: 27017
+  #       database: textdb
 
   #設定Jackson的日期轉換格式
   jackson:
