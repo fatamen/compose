@@ -12,14 +12,24 @@ services:
       - "9080:8080"
     depends_on:
       - sqlserver
-    # 這裡可以添加環境變數來讓 Java 連接到 SQL Server 服務名稱
-    environment: # 取消註解並確認這些變數
-      - DB_HOST=sqlserver # 使用 SQL Server 服務的名稱作為主機
-      - DB_PORT=1433      # 使用 SQL Server 容器內部預設的埠號
-      - DB_NAME=back2     # 您的資料庫名稱
-      - DB_USER=sa        # 您的資料庫使用者名稱
-      - DB_PASSWORD=P@ssw0rd # 您的資料庫密碼
-  
+    environment:
+      - DB_HOST=sqlserver
+      - DB_PORT=1433
+      - DB_NAME=back2
+      - DB_USER=sa
+      - DB_PASSWORD=P@ssw0rd
+    volumes:
+      # --- 新增的 Java 服務 Volume 掛載 ---
+      # 將主機上的 ./back 目錄掛載到容器內 Tomcat 的 webapps 目錄
+      # 這樣您在主機上修改 GoldenBowl.war 後，容器內會同步。
+      # 注意：WAR 檔案的更新可能需要 Tomcat 重新載入或重啟容器。
+      - ./back/target:/usr/local/tomcat/webapps:ro # 假設您的 WAR 放在 ./back/target
+                                                    # 將 target 目錄掛載為只讀，確保WAR檔案能被Tomcat讀取
+                                                    # 如果您的 Dockerfile 是直接 COPY WAR，這裡路徑需對應
+      # 如果您的 Java 應用程式的 application.yml 也在 ./back 下，您可能需要獨立掛載
+      - ./back/src/main/resources/application.yml:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.yml # 範例路徑，請確認WAR解壓後的實際路徑
+      # --- 結束新增 ---
+
   vue1:
     build:
       context: ./front-cus
@@ -36,6 +46,13 @@ services:
       - "80:80"
       - "443:443"
       - "6173:6173"
+    volumes:
+      # --- 新增的 Vue 服務 Volume 掛載 ---
+      # 將主機上的 ./front-cus/dist 目錄掛載到 Nginx 容器內提供靜態檔案的路徑
+      - ./front-cus/dist:/usr/share/nginx/html # Nginx 默認的 root 路徑
+      # 同時掛載 nginx.conf，方便修改 Nginx 配置並重載
+      - ./front-cus/nginx.conf:/etc/nginx/nginx.conf:ro # 只讀掛載 Nginx 配置
+      # --- 結束新增 ---
 
   vue2:
     build:
@@ -53,6 +70,11 @@ services:
       - "8081:80"
       - "8443:443"
       - "7173:6173"
+    volumes:
+      # --- 新增的 Vue 服務 Volume 掛載 ---
+      - ./front-store/dist:/usr/share/nginx/html
+      - ./front-store/nginx.conf:/etc/nginx/nginx.conf:ro
+      # --- 結束新增 ---
 
   vue3:
     build:
@@ -70,6 +92,11 @@ services:
       - "8082:80"
       - "8444:443"
       - "9174:6173"
+    volumes:
+      # --- 新增的 Vue 服務 Volume 掛載 ---
+      - ./front-admin/dist:/usr/share/nginx/html
+      - ./front-admin/nginx.conf:/etc/nginx/nginx.conf:ro
+      # --- 結束新增 ---
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -82,6 +109,7 @@ services:
     ports:
       - "9433:1433"
     volumes:
+      # 這部分您已經有了，很好！
       - mssqlsystem:/var/opt/mssql
       - mssqluser:/var/opt/sqlserver
 

@@ -11,11 +11,11 @@ import apiClient from './axios.js';
 export const uploadImage = async (file, type = 'food', relatedId = null) => {
     try {
         console.log('開始上傳圖片到本地伺服器...');
-        
+
         // 建立 FormData
         const formData = new FormData();
         formData.append('file', file);
-        
+
         // 根據類型決定 API 路徑
         let apiPath;
         if (type === 'food' && relatedId) {
@@ -26,20 +26,20 @@ export const uploadImage = async (file, type = 'food', relatedId = null) => {
             // 通用上傳路徑（如果後端有提供）
             apiPath = '/api/upload-image';
         }
-        
+
         // 發送請求
         const response = await apiClient.post(apiPath, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
         });
-        
+
         // 取得相對路徑
         const relativePath = response.data;
         console.log('✅ 圖片上傳成功，路徑:', relativePath);
-        
+
         return relativePath;
-        
+
     } catch (error) {
         console.error('❌ 圖片上傳失敗:', error);
         throw new Error(`圖片上傳失敗: ${error.response?.data || error.message}`);
@@ -74,22 +74,22 @@ export const uploadStoreImage = async (file, storeId) => {
 export const uploadImageGeneric = async (file) => {
     try {
         console.log('開始上傳圖片（通用方式）...');
-        
+
         const formData = new FormData();
         formData.append('file', file);
-        
+
         // 使用通用上傳 API
         const response = await apiClient.post('/api/foods/upload-image', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
         });
-        
+
         const relativePath = response.data;
         console.log('✅ 圖片上傳成功，路徑:', relativePath);
-        
+
         return relativePath;
-        
+
     } catch (error) {
         console.error('❌ 圖片上傳失敗:', error);
         throw new Error(`圖片上傳失敗: ${error.response?.data || error.message}`);
@@ -103,14 +103,14 @@ export const uploadImageGeneric = async (file) => {
  */
 export const getImageUrl = (relativePath) => {
     if (!relativePath) return null;
-    
+
     // 如果已經是完整 URL，直接回傳
     if (relativePath.startsWith('http')) {
         return relativePath;
     }
-    
+
     // 建構完整 URL
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:8080';
     return `${baseUrl}/${relativePath}`;
 };
 
@@ -122,7 +122,9 @@ export const getImageUrl = (relativePath) => {
 export const checkImageExists = async (relativePath) => {
     try {
         const fullUrl = getImageUrl(relativePath);
-        const response = await fetch(fullUrl, { method: 'HEAD' });
+        const response = await fetch(fullUrl, {
+            method: 'HEAD'
+        });
         return response.ok;
     } catch (error) {
         console.warn('檢查圖片存在性失敗:', error);
