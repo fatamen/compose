@@ -162,7 +162,7 @@
   
   <script setup>
   import { ref, onMounted, reactive } from 'vue';
-  import axios from 'axios';
+  import axios from '@/plungins/axios.js';
   import { useRoute } from 'vue-router'; // 引入 useRoute
   
   // 定義一個訊息狀態

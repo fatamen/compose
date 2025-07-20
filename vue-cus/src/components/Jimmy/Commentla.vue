@@ -71,7 +71,7 @@
   
   <script setup>
   import { ref, onMounted, computed, watch } from 'vue';
-  import axios from 'axios';
+  import axios from '@/plungins/axios.js';
   import { format } from 'date-fns';
   
   const props = defineProps({

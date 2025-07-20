@@ -91,7 +91,7 @@
   
   <script setup>
   import { ref, onMounted, computed, watch } from 'vue';
-  import axios from 'axios';
+  import axios from '@/plungins/axios.js';
   import { format } from 'date-fns';
   import Button from 'primevue/button'; // 引入 PrimeVue Button
   
@@ -111,7 +111,6 @@
   const comments = ref([]);
   const loading = ref(true);
   const activeTab = ref('latest');
-  const API_URL = import.meta.env.VITE_API_URL;
   
   // 檢舉模態框的狀態
   const showReportModal = ref(false);
@@ -120,7 +119,7 @@
   const fetchComments = async () => {
     loading.value = true;
     try {
-      const response = await axios.get(`${API_URL}/comment/store/${props.storeId}`);
+      const response = await axios.get(`/comment/store/${props.storeId}`);
       comments.value = Array.isArray(response.data) ? response.data : [];
   
       // 重要：這裡的 `comment.user` 和 `comment.user.name` 應該是後端 `CommentResponseDTO` 返回的 `userName`

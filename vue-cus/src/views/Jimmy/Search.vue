@@ -136,7 +136,7 @@ const allStores = ref([]); // 存放從後端取得的原始 Store 數據
 const fetchStores = async (searchTerm = '') => {
   try {
     const userId = userStore.userId; // 獲取當前用戶ID
-    let url = `${API_URL}/stores`;
+    let url = `/stores`;
     const params = {};
 
     if (searchTerm) {

@@ -38,7 +38,7 @@
   
   <script setup>
   import { ref, onMounted, computed } from 'vue';
-  import axios from 'axios';
+  import axios from '@/plungins/axios.js';
   import { useUserStore } from '@/stores/user'; // 假設你有用戶 store
   import Dropdown from 'primevue/dropdown';
   
@@ -65,7 +65,7 @@
   // 從後端獲取檢舉類型列表
   const fetchReportTypes = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/report-type`);
+      const response = await axios.get(`/api/report-type`);
       reportTypes.value = response.data;
     } catch (error) {
       console.error('Error fetching report types:', error);
@@ -105,7 +105,7 @@
     };
   
     try {
-      const response = await axios.post(`${API_URL}/api/reports`, reportData);
+      const response = await axios.post(`/api/reports`, reportData);
       if (response.status === 201) { // HTTP 201 Created
         message.value = { type: 'success', text: '檢舉已成功提交！' };
         emit('reportSubmitted'); // 通知父組件檢舉已提交

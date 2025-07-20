@@ -67,7 +67,7 @@ let preventBlur = false; // **新增：防止 blur 事件觸發的旗標**
 // 從後端獲取熱門搜尋數據
 const fetchHotSearches = async () => {
   try {
-    const response = await axios.get(`${API_URL}/api/web-recom`);
+    const response = await axios.get(`/api/web-recom`);
     hotSearches.value = response.data.sort((a, b) => a.prime - b.prime);
     filteredHotSearches.value = [...hotSearches.value];
   } catch (error) {

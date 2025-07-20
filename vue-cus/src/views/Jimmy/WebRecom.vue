@@ -114,7 +114,7 @@ const saveSortOrder = async () => {
             ...tag,
             prime: index + 1
         }));
-        await axios.post(`${API_URL}/batch-update`, updatedTags);
+        await axios.post(`/batch-update`, updatedTags);
         tags.value = updatedTags;
         tempOrder.value = [];
         errorMessage.value = '排序已保存';
@@ -127,7 +127,7 @@ const saveSortOrder = async () => {
 const saveTag = async () => {
     try {
         if (editMode.value) {
-            await axios.put(`${API_URL}/${newTag.value.id}`, newTag.value);
+            await axios.put(`/${newTag.value.id}`, newTag.value);
         } else {
             const maxPrime = Math.max(...tags.value.map(t => t.prime || 0), 0);
             await axios.post(API_URL, { ...newTag.value, prime: maxPrime + 1 });
@@ -158,7 +158,7 @@ const cancelEdit = () => {
 const deleteTag = async (id) => {
     if (confirm('確定要刪除此標籤嗎？')) {
         try {
-            await axios.delete(`${API_URL}/${id}`);
+            await axios.delete(`/${id}`);
             await fetchTags();
             errorMessage.value = '';
         } catch (error) {

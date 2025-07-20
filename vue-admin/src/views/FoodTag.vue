@@ -130,7 +130,7 @@ const fetchTags = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await axios.get(`${API_URL}/api/tags`);
+    const response = await axios.get(`/api/tags`);
     tags.value = response.data;
   } catch (err) {
     console.error('獲取標籤失敗:', err);
@@ -147,7 +147,7 @@ const addTag = async () => {
     return;
   }
   try {
-    const response = await axios.post(`${API_URL}/api/tags`, { name: newTagName.value.trim() });
+    const response = await axios.post(`/api/tags`, { name: newTagName.value.trim() });
     tags.value.push(response.data);
     newTagName.value = '';
     Swal.fire('成功', '標籤新增成功！', 'success'); // SweetAlert2 提示
