@@ -40,7 +40,7 @@ import SidebarFilters from '@/components/Jimmy/SidebarFilters.vue';
 import PopularRestaurants from '@/components/Jimmy/PopularRestaurants.vue';
 import SearchSection from '@/components/Jimmy/SearchSection.vue';
 import RestaurantListSection from "@/components/Jimmy/RestaurantListSection.vue"
-import axios from 'axios';
+import axios from '@/plungins/axios.js';
 import { useUserStore } from '@/stores/user';
 import { useRestaurantDisplayStore } from '@/stores/restaurantDisplay';
 import { useLocationStore } from '@/stores/location';
@@ -51,7 +51,7 @@ const locationStore = useLocationStore();
 const restaurantDisplayStore = useRestaurantDisplayStore();
 
 
-const API_URL = import.meta.env.VITE_API_URL;
+
 const SEARCH_RADIUS_KM = 3.0; // 定義熱門餐廳的搜索半徑為 3 公里
 
 // Haversine 公式計算距離 (單位: 公里)

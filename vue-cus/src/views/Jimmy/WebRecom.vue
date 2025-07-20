@@ -52,13 +52,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import axios from 'axios';
+import axios from '@/plungins/axios.js';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 
-// API 基礎 URL
-const API_URL = import.meta.env.VITE_RECOM_URL;
 
 // 狀態管理
 const tags = ref([]);
@@ -79,7 +77,7 @@ const displayedTags = computed(() => {
 // 獲取所有標籤
 const fetchTags = async () => {
     try {
-        const response = await axios.get(API_URL);
+        const response = await axios.get('/api/web-recom');
         tags.value = response.data;
         tempOrder.value = []; // 重置臨時排序
     } catch (error) {
@@ -130,7 +128,7 @@ const saveTag = async () => {
             await axios.put(`/${newTag.value.id}`, newTag.value);
         } else {
             const maxPrime = Math.max(...tags.value.map(t => t.prime || 0), 0);
-            await axios.post(API_URL, { ...newTag.value, prime: maxPrime + 1 });
+            await axios.post('/api/web-recom', { ...newTag.value, prime: maxPrime + 1 });
         }
         newTag.value = { tag: '' };
         editMode.value = false;

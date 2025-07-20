@@ -38,10 +38,8 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue';
-import axios from 'axios';
+import axios from '@/plungins/axios.js';
 
-// API 基礎 URL
-const API_URL = import.meta.env.VITE_API_URL;
 
 // 定義 Props
 const props = defineProps({

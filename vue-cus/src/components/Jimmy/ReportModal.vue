@@ -55,7 +55,7 @@
   
   const userStore = useUserStore(); // 使用 Pinia 的用戶 store
   
-  const API_URL = import.meta.env.VITE_API_URL;
+
   
   const reportTypes = ref([]);
   const selectedReportTypeId = ref(null);

@@ -61,9 +61,7 @@
     import Button from 'primevue/button';
     import Message from 'primevue/message';
     
-    // API 基礎 URL
-    const API_URL = import.meta.env.VITE_REPOTYPE_URL;
-    
+  
     // 狀態管理
     const reports = ref([]);
     const newReport = ref({ type: '', description: '' });
@@ -83,7 +81,7 @@
     // 獲取所有標籤
     const fetchReports = async () => {
         try {
-            const response = await axios.get(API_URL);
+            const response = await axios.get('/api/report-type');
             reports.value = response.data;
             tempOrder.value = []; // 重置臨時排序
         } catch (error) {
@@ -134,7 +132,7 @@
                 await axios.put(`/${newReport.value.id}`, newReport.value);
             } else {
                 const maxPrime = Math.max(...reports.value.map(t => t.prime || 0), 0);
-                await axios.post(API_URL, { ...newReport.value, prime: maxPrime + 1 });
+                await axios.post('/api/report-type', { ...newReport.value, prime: maxPrime + 1 });
             }
             newReport.value = { type: '', description: '' };
             editMode.value = false;
