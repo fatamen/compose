@@ -9,17 +9,23 @@ services:
         war_file: GoldenBowl.war
     container_name: goldenBowl-back
     ports:
-      - "9080:8080" # Java 服務的端口映射，通常用於內部調試或直接訪問，Nginx 不會用到這個主機端口
+      - "9080:8080"
     depends_on:
-      - sqlserver # 確保 SQL Server 在 Java 服務之前啟動
-    environment:
-      # ***關鍵修改：讓 Java 連接到 Docker 網絡中的 SQL Server 服務名稱***
-      # 這是最推薦的做法，因為服務之間使用 Docker 內網溝通
-      - SPRING_DATASOURCE_URL=jdbc:sqlserver://sqlserver:1433;database=back2;trustServerCertificate=true
-      - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=P@ssw0rd
+      - sqlserver
 
-  vue1: # Nginx 服務 (主前端)
+    volumes:
+      # --- 新增的 Java 服務 Volume 掛載 ---
+      # 將主機上的 ./back 目錄掛載到容器內 Tomcat 的 webapps 目錄
+      # 這樣您在主機上修改 GoldenBowl.war 後，容器內會同步。
+      # 注意：WAR 檔案的更新可能需要 Tomcat 重新載入或重啟容器。
+      - ./back/target:/usr/local/tomcat/webapps:ro # 假設您的 WAR 放在 ./back/target
+                                                    # 將 target 目錄掛載為只讀，確保WAR檔案能被Tomcat讀取
+                                                    # 如果您的 Dockerfile 是直接 COPY WAR，這裡路徑需對應
+      # 如果您的 Java 應用程式的 application.yml 也在 ./back 下，您可能需要獨立掛載
+      - ./back/src/main/resources/application.yml:/usr/local/tomcat/webapps/ROOT/WEB-INF/classes/application.yml # 範例路徑，請確認WAR解壓後的實際路徑
+      # --- 結束新增 ---
+
+  vue1:
     build:
       context: ./front-cus
       dockerfile: ./nginx.dockerfile
@@ -32,11 +38,18 @@ services:
     environment:
       - TZ=Asia/Taipei
     ports:
-      - "80:80"     # 主機的 80 端口映射到容器的 80 端口 (用於 HTTP 重定向)
-      - "443:443"   # 主機的 443 端口映射到容器的 443 端口 (用於 HTTPS 訪問)
-      - "6173:6173" # 你原有的開發或特定用途端口，如果不需要外部訪問可以移除
+      - "80:80"
+      - "443:443"
+      - "6173:6173"
+    volumes:
+      # --- 新增的 Vue 服務 Volume 掛載 ---
+      # 將主機上的 ./front-cus/dist 目錄掛載到 Nginx 容器內提供靜態檔案的路徑
+      - ./front-cus/dist:/usr/share/nginx/html # Nginx 默認的 root 路徑
+      # 同時掛載 nginx.conf，方便修改 Nginx 配置並重載
+      - ./front-cus/nginx.conf:/etc/nginx/nginx.conf:ro # 只讀掛載 Nginx 配置
+      # --- 結束新增 ---
 
-  vue2: # Nginx 服務 (商店前端)
+  vue2:
     build:
       context: ./front-store
       dockerfile: ./nginx.dockerfile
@@ -49,11 +62,16 @@ services:
     environment:
       - TZ=Asia/Taipei
     ports:
-      - "8081:80"   # HTTP 端口
-      - "8443:443"  # HTTPS 端口映射 (主機 8443 -> 容器 443)
+      - "8081:80"
+      - "8443:443"
       - "7173:6173"
+    volumes:
+      # --- 新增的 Vue 服務 Volume 掛載 ---
+      - ./front-store/dist:/usr/share/nginx/html
+      - ./front-store/nginx.conf:/etc/nginx/nginx.conf:ro
+      # --- 結束新增 ---
 
-  vue3: # Nginx 服務 (管理前端)
+  vue3:
     build:
       context: ./front-admin
       dockerfile: ./nginx.dockerfile
@@ -66,28 +84,13 @@ services:
     environment:
       - TZ=Asia/Taipei
     ports:
-      - "8082:80"   # HTTP 端口
-      - "8444:443"  # HTTPS 端口映射 (主機 8444 -> 容器 443)
+      - "8082:80"
+      - "8444:443"
       - "9174:6173"
-
-  # =========================================================
-  # SQL Server 服務配置
-  # =========================================================
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver-back
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=P@ssw0rd
-      - MSSQL_COLLATION=Chinese_Taiwan_Stroke_CI_AS
-      - TZ=Asia/Taipei
-    ports:
-      - "9433:1433" # 主機的 9433 端口映射到容器內 SQL Server 的 1433 端口
-                    # 這是給主機或其他不在 Docker Compose 網絡的程式直接連線用
     volumes:
-      - mssqlsystem:/var/opt/mssql
-      - mssqluser:/var/opt/sqlserver
+      # --- 新增的 Vue 服務 Volume 掛載 ---
+      - ./front-admin/dist:/usr/share/nginx/html
+      - ./front-admin/nginx.conf:/etc/nginx/nginx.conf:ro
+      # --- 結束新增 ---
 
-volumes:
-  mssqlsystem:
-  mssqluser:
+  
