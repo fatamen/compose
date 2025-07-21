@@ -13,12 +13,12 @@ services:
     depends_on: # 新增：確保 SQL Server 在 Java 服務之前啟動
       - sqlserver
     # 這裡可以添加環境變數來讓 Java 連接到 SQL Server 服務名稱
-    # environment:
-    #   - DB_HOST=sqlserver
-    #   - DB_PORT=1433
-    #   - DB_NAME=back2
-    #   - DB_USER=sa
-    #   - DB_PASSWORD=P@ssw0rd
+    environment:
+      - DB_HOST=sqlserver
+      - DB_PORT=1433
+      - DB_NAME=back2
+      - DB_USER=sa
+      - DB_PASSWORD=P@ssw0rd
 
   vue1:
     build:
