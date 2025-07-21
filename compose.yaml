@@ -10,15 +10,19 @@ services:
     container_name: goldenBowl-back
     ports:
       - "9080:8080"
-    
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:sqlserver://host.docker.internal:1433;database=back2;trustServerCertificate=true
-      - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=P@ssw0rd
+    depends_on: # 新增：確保 SQL Server 在 Java 服務之前啟動
+      - sqlserver
+    # 這裡可以添加環境變數來讓 Java 連接到 SQL Server 服務名稱
+    # environment:
+    #   - DB_HOST=sqlserver
+    #   - DB_PORT=1433
+    #   - DB_NAME=back2
+    #   - DB_USER=sa
+    #   - DB_PASSWORD=P@ssw0rd
 
   vue1:
     build:
-      context: ./front-cus
+      context: ./front-cus # 尋找front目錄
       dockerfile: ./nginx.dockerfile
       args:
         config_file: nginx.conf
@@ -29,13 +33,13 @@ services:
     environment:
       - TZ=Asia/Taipei
     ports:
-      - "80:80"
-      - "443:443"
-      - "6173:6173"
+      - "80:80"     # HTTP 端口
+      - "443:443"   # 新增：HTTPS 端口映射 (主機 443 -> 容器 443)
+      - "6173:6173" # 您原有的開發或特定用途端口
 
   vue2:
     build:
-      context: ./front-store
+      context: ./front-store # 尋找front目錄
       dockerfile: ./nginx.dockerfile
       args:
         config_file: nginx.conf
@@ -46,23 +50,46 @@ services:
     environment:
       - TZ=Asia/Taipei
     ports:
-      - "8081:80"
-      - "8443:443"
-      - "7173:6173"
+      - "8081:80"   # HTTP 端口
+      - "8443:443"  # 新增：HTTPS 端口映射 (主機 8443 -> 容器 443)
+      - "7173:6173" # 您原有的開發或特定用途端口
 
   vue3:
     build:
-      context: ./front-admin
+      context: ./front-admin # 尋找front目錄
       dockerfile: ./nginx.dockerfile
       args:
         config_file: nginx.conf
         publish_dir: dist
-    container_name: vue-admin
+    container_name: vue-admin # 命名contain名稱
     depends_on:
       - java
     environment:
       - TZ=Asia/Taipei
     ports:
-      - "8082:80"
-      - "8444:443"
-      - "9174:6173"
+      - "8082:80"   # HTTP 端口
+      - "8444:443"  # 新增：HTTPS 端口映射 (主機 8444 -> 容器 443)
+      - "9174:6173" # 您原有的開發或特定用途端口
+
+  # =========================================================
+  # 新增：SQL Server 服務配置 (如果您還沒有添加到 compose.yaml)
+  # 這將使 SQL Server 成為 Docker Compose 網絡的一部分。
+  # =========================================================
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest # 使用最新的 SQL Server 映象
+    container_name: sqlserver-back # SQL Server 容器的名稱
+    environment:
+      - ACCEPT_EULA=Y             # 接受 EULA (使用者授權合約)
+      - MSSQL_SA_PASSWORD=P@ssw0rd # 設定 SA 帳戶密碼 (請在生產環境中使用更強的密碼)
+      - MSSQL_COLLATION=Chinese_Taiwan_Stroke_CI_AS # 設定排序規則，方便中文處理
+      - TZ=Asia/Taipei            # 設定時區
+    ports:
+      - "9433:1433" # 將主機的 9433 端口映射到容器內 SQL Server 的 1433 端口
+    volumes: # 定義持久化儲存，防止資料丟失
+      - mssqlsystem:/var/opt/mssql # 系統資料庫文件
+      - mssqluser:/var/opt/sqlserver # 用戶資料庫文件
+      # - C:/Users/User/docker:/app/photos # 如果這個路徑與 SQL Server 資料無關，可以移除或調整
+
+volumes: # 定義 Docker 卷，用於持久化 SQL Server 數據
+  mssqlsystem:
+  mssqluser:
